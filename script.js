@@ -70,24 +70,32 @@
     });
   }
 
-  // ===== Active Nav =====
+  // ===== Active Nav & View Switcher =====
   function initActiveNav() {
-    const sections = document.querySelectorAll('section[id], header[id]');
+    const sections = document.querySelectorAll('.tool-section, .hero');
     const navLinks = document.querySelectorAll('.nav-link');
-    if (!sections.length || !navLinks.length) return;
+    
+    function showSection(id) {
+      sections.forEach(function (s) { s.classList.remove('active-view'); });
+      navLinks.forEach(function (l) { l.classList.remove('active'); });
+      const target = document.getElementById(id.replace('#', ''));
+      if (target) {
+        target.classList.add('active-view');
+        navLinks.forEach(function (l) { if (l.getAttribute('href') === id) l.classList.add('active'); });
+        window.scrollTo(0, 0);
+      }
+    }
 
-    const observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          navLinks.forEach(function (link) {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === '#' + id) link.classList.add('active');
-          });
-        }
+    navLinks.forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        showSection(this.getAttribute('href'));
       });
-    }, { threshold: 0.3 });
-    sections.forEach(function (section) { observer.observe(section); });
+    });
+
+    // Default view
+    const hash = window.location.hash || '#home';
+    showSection(hash);
   }
 
   // ===== CALCULATOR =====

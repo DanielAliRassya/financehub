@@ -27,8 +27,6 @@
         <li><a href="#kalkulator" class="nav-link">Kalkulator</a></li>
         <li><a href="#math-solver" class="nav-link">Math Solver</a></li>
         <li><a href="#tabungan" class="nav-link">Tabungan</a></li>
-        <li><a href="#keuangan" class="nav-link">Keuangan</a></li>
-        <li><a href="#konverter" class="nav-link">Konverter</a></li>
       </ul>
     </div>
   </nav>
@@ -288,6 +286,68 @@
         </div>
       </div>
     </section>
+
+<!-- ==================== KEUANGAN (INCOME/EXPENSE) ==================== -->
+    <section class="tool-section section alt-bg" id="keuangan">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-icon icon-convert"><i class="fas fa-wallet"></i></div>
+          <h2 class="section-title">Keuangan Harian</h2>
+          <p class="section-subtitle">Catat pemasukan dan pengeluaran harian Anda</p>
+        </div>
+        <div class="solver-wrapper reveal">
+          <div class="goal-card">
+            <div class="deposit-illustration"><i class="fas fa-wallet"></i></div>
+            <h3>Catat Transaksi Baru</h3>
+            <form id="financeForm" class="form-grid">
+              <div class="form-group">
+                <label><i class="fas fa-font"></i> Catatan</label>
+                <input type="text" id="finNote" placeholder="contoh: Gaji Bulanan / Makan Siang" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-money-bill-wave"></i> Jumlah (Rp)</label>
+                <input type="number" id="finAmount" placeholder="50000" min="1" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-tags"></i> Jenis Transaksi</label>
+                <select id="finType">
+                  <option value="income">Pemasukan (+)</option>
+                  <option value="expense">Pengeluaran (-)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-calendar"></i> Tanggal</label>
+                <input type="date" id="finDate" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Simpan Transaksi</button>
+            </form>
+          </div>
+          <div class="active-goal" style="margin-top:24px;">
+            <div class="goal-header">
+              <h3><i class="fas fa-history"></i> Ringkasan & Riwayat</h3>
+              <button class="btn btn-secondary btn-sm" id="clearFinBtn">Reset</button>
+            </div>
+            <div class="goal-stats">
+              <div class="goal-stat">
+                <span class="goal-stat-label">Total Masuk</span>
+                <strong class="goal-stat-value text-success" id="finTotalIncome">Rp 0</strong>
+              </div>
+              <div class="goal-stat">
+                <span class="goal-stat-label">Total Keluar</span>
+                <strong class="goal-stat-value" style="color:var(--accent-danger)" id="finTotalExpense">Rp 0</strong>
+              </div>
+            </div>
+            <div id="finList" class="history-list" style="margin-top:16px;"></div>
+          </div>
+          <div class="active-goal" style="margin-top:24px;">
+            <h3><i class="fas fa-chart-bar"></i> Analitik Harian</h3>
+            <div id="finChart" class="chart-container" style="min-height:200px; margin-top:16px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
 
     <!-- ==================== KONVERTER ==================== -->
     <section class="tool-section section alt-bg" id="konverter">
@@ -563,65 +623,7 @@
       </div>
     </section>
 
-    <!-- ==================== KEUANGAN (INCOME/EXPENSE) ==================== -->
-    <section class="tool-section section alt-bg" id="keuangan">
-      <div class="container">
-        <div class="section-header reveal">
-          <div class="section-icon icon-convert"><i class="fas fa-wallet"></i></div>
-          <h2 class="section-title">Keuangan Harian</h2>
-          <p class="section-subtitle">Catat pemasukan dan pengeluaran harian Anda</p>
-        </div>
-        <div class="solver-wrapper reveal">
-          <div class="goal-card">
-            <div class="deposit-illustration"><i class="fas fa-wallet"></i></div>
-            <h3>Catat Transaksi Baru</h3>
-            <form id="financeForm" class="form-grid">
-              <div class="form-group">
-                <label><i class="fas fa-font"></i> Catatan</label>
-                <input type="text" id="finNote" placeholder="contoh: Gaji Bulanan / Makan Siang" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-money-bill-wave"></i> Jumlah (Rp)</label>
-                <input type="number" id="finAmount" placeholder="50000" min="1" required>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-tags"></i> Jenis Transaksi</label>
-                <select id="finType">
-                  <option value="income">Pemasukan (+)</option>
-                  <option value="expense">Pengeluaran (-)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label><i class="fas fa-calendar"></i> Tanggal</label>
-                <input type="date" id="finDate" required>
-              </div>
-              <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Simpan Transaksi</button>
-            </form>
-          </div>
-          <div class="active-goal" style="margin-top:24px;">
-            <div class="goal-header">
-              <h3><i class="fas fa-history"></i> Ringkasan & Riwayat</h3>
-              <button class="btn btn-secondary btn-sm" id="clearFinBtn">Reset</button>
-            </div>
-            <div class="goal-stats">
-              <div class="goal-stat">
-                <span class="goal-stat-label">Total Masuk</span>
-                <strong class="goal-stat-value text-success" id="finTotalIncome">Rp 0</strong>
-              </div>
-              <div class="goal-stat">
-                <span class="goal-stat-label">Total Keluar</span>
-                <strong class="goal-stat-value" style="color:var(--accent-danger)" id="finTotalExpense">Rp 0</strong>
-              </div>
-            </div>
-            <div id="finList" class="history-list" style="margin-top:16px;"></div>
-          </div>
-          <div class="active-goal" style="margin-top:24px;">
-            <h3><i class="fas fa-chart-bar"></i> Analitik Harian</h3>
-            <div id="finChart" class="chart-container" style="min-height:200px; margin-top:16px;"></div>
-          </div>
-        </div>
-      </div>
-    </section>
+    
 
   </main>
 

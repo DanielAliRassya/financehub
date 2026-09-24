@@ -452,7 +452,7 @@ body {
 .conv-formula li { padding: 4px 0; color: var(--text-secondary); font-size: 0.88rem; }
 
 /* Trigonometry */
-.trigo-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 640px; margin: 0 auto 20px; }
+.trigo-cards { display: flex; justify-content: center; gap: 16px; max-width: 800px; margin: 0 auto 20px; flex-wrap: wrap; }
 
 .trio-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-md); }
 .trio-header { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary); }

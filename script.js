@@ -268,7 +268,7 @@
       .replace(/\bpi\b/gi, 'PI')
       .replace(/\be\b/g, 'E');
 
-    if (!/^[0-9\s\+\-\*\/\.\(\)\,%\^A-Z]+$/.test(expr)) {
+    if (!/^[0-9\s\+\-\*\/\.\(\)\,%\^a-zA-Z\u03c0]+$/.test(expr)) {
       throw new Error('Karakter tidak dikenal');
     }
 
@@ -330,13 +330,22 @@
     }
     function parseMulDiv() {
       let left = parseUnary();
-      while (peek() && peek().type === 'op' && (peek().value === '*' || peek().value === '/' || peek().value === '%')) {
-        const op = peek().value;
-        eat('op', op);
-        const right = parseUnary();
-        if (op === '*') left = left * right;
-        else if (op === '/') left = left / right;
-        else left = left % right;
+      while (peek()) {
+        const t = peek();
+        if (t.type === 'op' && (t.value === '*' || t.value === '/' || t.value === '%')) {
+          const op = t.value;
+          eat('op', op);
+          const right = parseUnary();
+          if (op === '*') left = left * right;
+          else if (op === '/') left = left / right;
+          else left = left % right;
+        } else if (t.type === 'num' || t.type === 'ident' || (t.type === 'op' && t.value === '(')) {
+          // Implicit multiplication e.g. 5(2), 2pi, sin(30)10
+          const right = parseUnary();
+          left = left * right;
+        } else {
+          break;
+        }
       }
       return left;
     }
@@ -388,8 +397,8 @@
         case 'csc': return 1 / Math.sin(arg * Math.PI / 180);
         case 'sec': return 1 / Math.cos(arg * Math.PI / 180);
         case 'cot': return 1 / Math.tan(arg * Math.PI / 180);
-        case 'asin': return Math.asin(arg) * 180 / Math.PI;
-        case 'acos': return Math.acos(arg) * 180 / Math.PI;
+        case 'asin': return Math.asin(Math.max(-1, Math.min(1, arg))) * 180 / Math.PI;
+        case 'acos': return Math.acos(Math.max(-1, Math.min(1, arg))) * 180 / Math.PI;
         case 'atan': return Math.atan(arg) * 180 / Math.PI;
         case 'sqrt': return Math.sqrt(arg);
         case 'abs': return Math.abs(arg);

@@ -14,6 +14,7 @@
     initCalculator();
     initMathSolver();
     initSavings();
+    initKeuangan();
     initConverters();
     initYear();
   });
@@ -427,6 +428,126 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // ===== KEUANGAN (INCOME/EXPENSE) =====
+  function initKeuangan() {
+    const KEY = 'financehub_keuangan_v1';
+    let data = loadFin();
+
+    const form = document.getElementById('financeForm');
+    const listEl = document.getElementById('finList');
+    const totalInEl = document.getElementById('finTotalIncome');
+    const totalExEl = document.getElementById('finTotalExpense');
+    const clearBtn = document.getElementById('clearFinBtn');
+    const dateInput = document.getElementById('finDate');
+
+    if (dateInput) dateInput.valueAsDate = new Date();
+
+    function loadFin() {
+      try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {}
+      return { transactions: [] };
+    }
+    function saveFin() { localStorage.setItem(KEY, JSON.stringify(data)); }
+    function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
+
+    function groupByDate() {
+      var groups = {};
+      data.transactions.forEach(function (t) {
+        if (!groups[t.date]) groups[t.date] = { income: 0, expense: 0 };
+        if (t.type === 'income') groups[t.date].income += t.amount;
+        else groups[t.date].expense += t.amount;
+      });
+      return Object.keys(groups).sort().map(function (d) { return { date: d, income: groups[d].income, expense: groups[d].expense }; });
+    }
+
+    function renderChart() {
+      var chartEl = document.getElementById('finChart');
+      var grouped = groupByDate();
+      if (!grouped.length) { chartEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Belum cukup data untuk analitik</p></div>'; return; }
+      var maxVal = 0;
+      grouped.forEach(function (g) { maxVal = Math.max(maxVal, g.income, g.expense); });
+      if (maxVal === 0) maxVal = 1;
+
+      var html = '<div class="chart-wrapper" style="display:flex;align-items:flex-end;gap:8px;height:180px;padding:10px 0;border-bottom:2px solid var(--border-color);margin-bottom:8px;">';
+      grouped.forEach(function (g) {
+        var inH = (g.income / maxVal * 100) || 0;
+        var exH = (g.expense / maxVal * 100) || 0;
+        html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+          '<div style="display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;height:150px;">' +
+            '<div style="width:14px;background:var(--accent-success);border-radius:4px 4px 0 0;height:' + inH + '%;transition:height 0.5s ease;" title="Masuk: ' + formatRp(g.income) + '"></div>' +
+            '<div style="width:14px;background:var(--accent-danger);border-radius:4px 4px 0 0;height:' + exH + '%;transition:height 0.5s ease;" title="Keluar: ' + formatRp(g.expense) + '"></div>' +
+          '</div>' +
+          '<span style="font-size:0.7rem;color:var(--text-muted);white-space:nowrap;">' + g.date.slice(5) + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+      html += '<div style="display:flex;gap:16px;justify-content:center;font-size:0.8rem;">' +
+        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-success);border-radius:3px;display:inline-block;"></span> Pemasukan</span>' +
+        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-danger);border-radius:3px;display:inline-block;"></span> Pengeluaran</span>' +
+      '</div>';
+      chartEl.innerHTML = html;
+    }
+
+    function render() {
+      const sorted = data.transactions.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+      const totalIn = sorted.filter(function (t) { return t.type === 'income'; }).reduce(function (s, t) { return s + t.amount; }, 0);
+      const totalEx = sorted.filter(function (t) { return t.type === 'expense'; }).reduce(function (s, t) { return s + t.amount; }, 0);
+      totalInEl.textContent = formatRp(totalIn);
+      totalExEl.textContent = formatRp(totalEx);
+
+      if (!sorted.length) {
+        listEl.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada transaksi</p></div>';
+        return;
+      }
+
+      listEl.innerHTML = sorted.map(function (t) {
+        var isIncome = t.type === 'income';
+        return '<div class="history-item">' +
+          '<div class="history-item-info">' +
+            '<div class="history-item-icon" style="background:' + (isIncome ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') + ';color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '"><i class="fas ' + (isIncome ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i></div>' +
+            '<div class="history-item-text">' +
+              '<span class="date">' + t.date + '</span>' +
+              '<span class="note">' + escapeHtml(t.note) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="history-item-amount" style="color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '">' + (isIncome ? '+' : '-') + formatRp(t.amount) + '</div>' +
+        '</div>';
+      }).join('');
+      renderChart();
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var tx = {
+          id: Date.now(),
+          date: document.getElementById('finDate').value,
+          note: document.getElementById('finNote').value.trim(),
+          amount: parseFloat(document.getElementById('finAmount').value),
+          type: document.getElementById('finType').value,
+        };
+        data.transactions.push(tx);
+        saveFin();
+        render();
+        var label = tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+        showToast('✓ ' + label + ' Tercatat', formatRp(tx.amount) + ' — ' + tx.note, 'success');
+        form.reset();
+        if (dateInput) dateInput.valueAsDate = new Date();
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (confirm('Hapus semua data keuangan?')) {
+          data = { transactions: [] };
+          saveFin();
+          render();
+        }
+      });
+    }
+
+    render();
   }
 
   // ===== SAVINGS TRACKER =====

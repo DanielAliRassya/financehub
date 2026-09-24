@@ -257,47 +257,155 @@
     return steps;
   }
 
-  function evaluateMath(expr) {
-    // Replace math functions
-    let normalized = expr
+  // Strict math parser to avoid Function()/eval injection while supporting
+  // trig (deg), ln/log10, sqrt, abs, pi, e, %, ^, parentheses, basic arithmetic.
+  function evaluateMath(rawExpr) {
+    const expr = String(rawExpr)
       .replace(/[×]/g, '*')
       .replace(/[÷]/g, '/')
       .replace(/[−]/g, '-')
-      .replace(/π/g, 'Math.PI')
-      .replace(/sqrt\s*\(/g, 'Math.sqrt(')
-      .replace(/log\s*\(/g, 'Math.log10(')
-      .replace(/ln\s*\(/g, 'Math.log(')
-      .replace(/abs\s*\(/g, 'Math.abs(')
-      .replace(/\^/g, '**');
+      .replace(/π/gi, 'PI')
+      .replace(/\bpi\b/gi, 'PI')
+      .replace(/\be\b/g, 'E');
 
-    // Handle sin/cos/tan with degree input
-    normalized = normalized.replace(/sin\s*\(/g, 'Math.sin(Math.PI/180*(').replace(/cos\s*\(/g, 'Math.cos(Math.PI/180*(').replace(/tan\s*\(/g, 'Math.tan(Math.PI/180*(');
-
-    // Close opened parentheses from sin/cos/tan replacement
-    // This is a simple counter approach
-    normalized = normalized.replace(/Math\.(sin|cos|tan)\(Math\.PI\/180\*\(/g, function (match) { return match; });
-
-    // Safer manual handling
-    normalized = handleTrigParentheses(normalized);
-
-    // Validate characters
-    if (!/^[\d\s\+\-\*\/\%\.\(\)\,\MathPIsqrtlog10absncosintang**]*$/.test(normalized)) {
-      throw new Error('Invalid expression');
+    if (!/^[0-9\s\+\-\*\/\.\(\)\,%\^A-Z]+$/.test(expr)) {
+      throw new Error('Karakter tidak dikenal');
     }
 
-    const result = new Function('return ' + normalized)();
-    if (typeof result !== 'number' || !isFinite(result)) throw new Error('Invalid result');
-    return result;
-  }
+    // Tokenize
+    const tokens = [];
+    let i = 0;
+    const numBuf = () => {
+      let s = '';
+      while (i < expr.length && /[0-9\.]/.test(expr[i])) { s += expr[i]; i++; }
+      return parseFloat(s);
+    };
+    while (i < expr.length) {
+      const c = expr[i];
+      if (/\s/.test(c)) { i++; continue; }
+      if (/[0-9]/.test(c)) {
+        tokens.push({ type: 'num', value: numBuf() });
+        continue;
+      }
+      if (/[a-zA-Z]/.test(c)) {
+        let s = '';
+        while (i < expr.length && /[a-zA-Z0-9]/.test(expr[i])) { s += expr[i]; i++; }
+        tokens.push({ type: 'ident', value: s });
+        continue;
+      }
+      if ('+-*/%^(),'.includes(c)) {
+        tokens.push({ type: 'op', value: c });
+        i++;
+        continue;
+      }
+      throw new Error('Token tidak valid: ' + c);
+    }
 
-  function handleTrigParentheses(expr) {
-    // Replace sin(x), cos(x), tan(x) with degree-to-radian conversions properly
-    return expr.replace(/Math\.(sin|cos|tan)\(\s*(-?\d+\.?\d*)\s*\)/g, function (match, func, val) {
-      const rad = parseFloat(val) * Math.PI / 180;
-      if (func === 'sin') return Math.sin(rad);
-      if (func === 'cos') return Math.cos(rad);
-      return Math.tan(rad);
-    });
+    // Parser
+    let p = 0;
+
+    function peek() { return tokens[p]; }
+    function eat(type, val) {
+      const t = tokens[p];
+      if (!t || t.type !== type || (val !== undefined && t.value !== val)) return null;
+      p++;
+      return t;
+    }
+    function expect(type, val) {
+      const t = eat(type, val);
+      if (!t) throw new Error('Sintaks salah');
+      return t;
+    }
+
+    function parseExpression() { return parseAddSub(); }
+    function parseAddSub() {
+      let left = parseMulDiv();
+      while (peek() && peek().type === 'op' && (peek().value === '+' || peek().value === '-')) {
+        const op = peek().value;
+        eat('op', op);
+        const right = parseMulDiv();
+        left = op === '+' ? left + right : left - right;
+      }
+      return left;
+    }
+    function parseMulDiv() {
+      let left = parseUnary();
+      while (peek() && peek().type === 'op' && (peek().value === '*' || peek().value === '/' || peek().value === '%')) {
+        const op = peek().value;
+        eat('op', op);
+        const right = parseUnary();
+        if (op === '*') left = left * right;
+        else if (op === '/') left = left / right;
+        else left = left % right;
+      }
+      return left;
+    }
+    function parseUnary() {
+      if (peek() && peek().type === 'op' && peek().value === '-') { eat('op', '-'); return -parsePower(); }
+      if (peek() && peek().type === 'op' && peek().value === '+') { eat('op', '+'); return parsePower(); }
+      return parsePower();
+    }
+    function parsePower() {
+      const left = parsePrimary();
+      if (peek() && peek().type === 'op' && peek().value === '^') {
+        eat('op', '^');
+        const right = parseUnary();
+        return Math.pow(left, right);
+      }
+      return left;
+    }
+    function parsePrimary() {
+      const t = peek();
+      if (!t) throw new Error('Sintaks tidak lengkap');
+      if (t.type === 'num') { eat('num'); return t.value; }
+      if (t.type === 'op' && t.value === '(') {
+        eat('op', '(');
+        const v = parseExpression();
+        expect('op', ')');
+        return v;
+      }
+      if (t.type === 'ident') {
+        eat('ident');
+        if (peek() && peek().type === 'op' && peek().value === '(') {
+          eat('op', '(');
+          const arg = parseExpression();
+          expect('op', ')');
+          return applyFunc(t.value, arg);
+        }
+        return applyFunc(t.value, null);
+      }
+      throw new Error('Token tak terduga: ' + t.value);
+    }
+    function applyFunc(name, arg) {
+      const lower = name.toLowerCase();
+      if (lower === 'pi') return Math.PI;
+      if (lower === 'e') return Math.E;
+      if (arg === null) throw new Error('Fungsi ' + name + ' butuh argumen');
+      switch (lower) {
+        case 'sin': return Math.sin(arg * Math.PI / 180);
+        case 'cos': return Math.cos(arg * Math.PI / 180);
+        case 'tan': return Math.tan(arg * Math.PI / 180);
+        case 'csc': return 1 / Math.sin(arg * Math.PI / 180);
+        case 'sec': return 1 / Math.cos(arg * Math.PI / 180);
+        case 'cot': return 1 / Math.tan(arg * Math.PI / 180);
+        case 'asin': return Math.asin(arg) * 180 / Math.PI;
+        case 'acos': return Math.acos(arg) * 180 / Math.PI;
+        case 'atan': return Math.atan(arg) * 180 / Math.PI;
+        case 'sqrt': return Math.sqrt(arg);
+        case 'abs': return Math.abs(arg);
+        case 'log': return Math.log10(arg);
+        case 'ln': return Math.log(arg);
+        case 'exp': return Math.exp(arg);
+        case 'floor': return Math.floor(arg);
+        case 'ceil': return Math.ceil(arg);
+        case 'round': return Math.round(arg);
+        default: throw new Error('Fungsi tidak dikenal: ' + name);
+      }
+    }
+
+    const result = parseExpression();
+    if (typeof result !== 'number' || !isFinite(result)) throw new Error('Hasil tidak valid');
+    return result;
   }
 
   function formatNumber(num) {
@@ -346,7 +454,7 @@
         saveData();
         renderGoal();
         goalForm.reset();
-        // Switch to deposit tab
+        showToast('✓ Tujuan Berhasil', 'Target tabungan "' + data.goal.name + '" telah disimpan!', 'success');
         tabButtons[1].click();
       });
     }
@@ -369,6 +477,7 @@
         saveData();
         renderGoal();
         renderHistory();
+        showToast('✓ Setoran Tercatat', 'Rp ' + dep.amount.toLocaleString('id-ID') + ' berhasil ditambahkan!', 'success');
         depositForm.reset();
         if (depositDate) depositDate.valueAsDate = new Date();
       });
@@ -647,4 +756,21 @@
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
   }
+
+  // ===== Toast Notification =====
+  function showToast(title, msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    toast.innerHTML =
+      '<div class="toast-icon"><i class="fas ' + icons[type] + '"></i></div>' +
+      '<div class="toast-text"><div class="toast-title">' + title + '</div><div class="toast-msg">' + msg + '</div></div>';
+    container.appendChild(toast);
+    setTimeout(function () {
+      toast.classList.add('out');
+      setTimeout(function () { toast.remove(); }, 300);
+    }, 2000);
+  }
 })();
+

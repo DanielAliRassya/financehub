@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FinanceHub - Kalkulator Keuangan, Matematika, dan Pelacak Tabungan">
+  <title>FinanceHub | Kalkulator & Tabungan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="container nav-container">
+      <a href="#home" class="logo">
+        <i class="fas fa-chart-line"></i> FinanceHub
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span class="hamburger"></span>
+      </button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#home" class="nav-link active">Beranda</a></li>
+        <li><a href="#kalkulator" class="nav-link">Kalkulator</a></li>
+        <li><a href="#math-solver" class="nav-link">Math Solver</a></li>
+        <li><a href="#tabungan" class="nav-link">Tabungan</a></li>
+        <li><a href="#konverter" class="nav-link">Konverter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero" id="home">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-text reveal">
+        <p class="hero-badge"><i class="fas fa-sparkles"></i> All-in-One Finance Tool</p>
+        <h1 class="hero-title">Kelola Uang & Hitung<br><span class="gradient-text">Dengan Mudah</span></h1>
+        <p class="hero-desc">
+          Kalkulator keuangan, pelacak tabungan, solver matematika, dan konverter satuan — semua dalam satu tempat.
+        </p>
+        <div class="hero-buttons">
+          <a href="#kalkulator" class="btn btn-primary"><i class="fas fa-calculator"></i> Mulai Hitung</a>
+          <a href="#tabungan" class="btn btn-secondary"><i class="fas fa-piggy-bank"></i> Kelola Tabungan</a>
+        </div>
+      </div>
+      <div class="hero-illustration reveal delay-1">
+        <div class="illus-card">
+          <div class="illus-icon-wrap illus-icon-1"><i class="fas fa-calculator"></i></div>
+          <div class="illus-icon-wrap illus-icon-2"><i class="fas fa-coins"></i></div>
+          <div class="illus-icon-wrap illus-icon-3"><i class="fas fa-square-root-alt"></i></div>
+          <div class="illus-icon-wrap illus-icon-4"><i class="fas fa-piggy-bank"></i></div>
+          <div class="illus-center"><i class="fas fa-wallet"></i></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ==================== KALKULATOR ==================== -->
+    <section class="tool-section section" id="kalkulator">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-icon"><i class="fas fa-calculator"></i></div>
+          <h2 class="section-title">Kalkulator</h2>
+          <p class="section-subtitle">Kalkulator ilmiah untuk perhitungan sehari-hari</p>
+        </div>
+        <div class="calculator-wrapper reveal">
+          <div class="calc-display">
+            <div class="calc-expression" id="calcExpression"></div>
+            <div class="calc-result" id="calcResult">0</div>
+          </div>
+          <div class="calc-grid">
+            <button class="calc-btn calc-fn" data-action="clear"><i class="fas fa-delete-left"></i> C</button>
+            <button class="calc-btn calc-fn" data-action="allclear">AC</button>
+            <button class="calc-btn calc-fn" data-value="%">%</button>
+            <button class="calc-btn calc-op" data-value="/">÷</button>
+            <button class="calc-btn calc-num" data-value="7">7</button>
+            <button class="calc-btn calc-num" data-value="8">8</button>
+            <button class="calc-btn calc-num" data-value="9">9</button>
+            <button class="calc-btn calc-op" data-value="*">×</button>
+            <button class="calc-btn calc-num" data-value="4">4</button>
+            <button class="calc-btn calc-num" data-value="5">5</button>
+            <button class="calc-btn calc-num" data-value="6">6</button>
+            <button class="calc-btn calc-op" data-value="-">−</button>
+            <button class="calc-btn calc-num" data-value="1">1</button>
+            <button class="calc-btn calc-num" data-value="2">2</button>
+            <button class="calc-btn calc-num" data-value="3">3</button>
+            <button class="calc-btn calc-op" data-value="+">+</button>
+            <button class="calc-btn calc-zero" data-value="0">0</button>
+            <button class="calc-btn calc-num" data-value=".">.</button>
+            <button class="calc-btn calc-eq" data-action="equals">=</button>
+            <!-- Scientific row -->
+            <button class="calc-btn calc-sci" data-value="(">(</button>
+            <button class="calc-btn calc-sci" data-value=")">)</button>
+            <button class="calc-btn calc-sci" data-action="sqrt">√</button>
+            <button class="calc-btn calc-sci" data-action="pow">x²</button>
+            <button class="calc-btn calc-sci" data-value="π">π</button>
+            <button class="calc-btn calc-sci" data-action="sin">sin</button>
+            <button class="calc-btn calc-sci" data-action="cos">cos</button>
+            <button class="calc-btn calc-sci" data-action="tan">tan</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== MATH SOLVER ==================== -->
+    <section class="tool-section section alt-bg" id="math-solver">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-icon icon-math"><i class="fas fa-square-root-alt"></i></div>
+          <h2 class="section-title">Math Solver</h2>
+          <p class="section-subtitle">Input soal matematika dan dapatkan jawabannya</p>
+        </div>
+        <div class="solver-wrapper reveal">
+          <div class="solver-input-area">
+            <label for="mathInput"><i class="fas fa-pencil-alt"></i> Ketik Soal Matematika</label>
+            <textarea id="mathInput" placeholder="Contoh: (25 * 4) + 100 / 5&#10;Contoh: sqrt(144) + 16&#10;Contoh: sin(30) * 10&#10;Contoh: 2^3 + 3^2" rows="3"></textarea>
+            <div class="solver-actions">
+              <button class="btn btn-primary" id="solveBtn"><i class="fas fa-bolt"></i> Selesaikan</button>
+              <button class="btn btn-secondary" id="clearMathBtn"><i class="fas fa-eraser"></i> Hapus</button>
+            </div>
+          </div>
+          <div class="solver-output" id="solverOutput">
+            <div class="output-placeholder">
+              <i class="fas fa-lightbulb"></i>
+              <p>Ketik soal matematika di atas lalu klik "Selesaikan"</p>
+            </div>
+          </div>
+          <div class="solver-examples reveal">
+            <p class="examples-label"><i class="fas fa-info-circle"></i> Contoh yang bisa dicoba:</p>
+            <div class="example-chips">
+              <button class="example-chip" data-expr="(150 + 250) * 0.15">(150+250)×0.15</button>
+              <button class="example-chip" data-expr="sqrt(196) + 50">√196 + 50</button>
+              <button class="example-chip" data-expr="2^10">2¹⁰</button>
+              <button class="example-chip" data-expr="sin(45) * 100">sin(45) × 100</button>
+              <button class="example-chip" data-expr="log(1000) + pi">log(1000) + π</button>
+              <button class="example-chip" data-expr="abs(-42) * 3">|−42| × 3</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TABUNGAN ==================== -->
+    <section class="tool-section section" id="tabungan">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-icon icon-save"><i class="fas fa-piggy-bank"></i></div>
+          <h2 class="section-title">Pelacak Tabungan</h2>
+          <p class="section-subtitle">Atur tujuan tabungan, catat setoran harian, pantau progress</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-bar reveal">
+          <button class="tab-btn active" data-tab="set-goal"><i class="fas fa-bullseye"></i> Tujuan</button>
+          <button class="tab-btn" data-tab="deposit"><i class="fas fa-plus-circle"></i> Setor</button>
+          <button class="tab-btn" data-tab="history"><i class="fas fa-history"></i> Riwayat</button>
+        </div>
+
+        <!-- Tab: Tujuan -->
+        <div class="tab-content active" id="tab-set-goal">
+          <div class="goal-card reveal">
+            <div class="goal-illustration">
+              <i class="fas fa-flag-checkered"></i>
+            </div>
+            <h3>Buat Tujuan Tabungan</h3>
+            <form id="goalForm" class="form-grid">
+              <div class="form-group">
+                <label><i class="fas fa-tag"></i> Nama Tujuan</label>
+                <input type="text" id="goalName" placeholder="contoh: Beli Laptop Baru" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-money-bill-wave"></i> Target Jumlah (Rp)</label>
+                <input type="number" id="goalAmount" placeholder="5000000" min="1000" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> Target Bulan</label>
+                <input type="number" id="goalMonths" placeholder="12" min="1" max="600" required>
+              </div>
+              <div class="form-group form-full">
+                <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Simpan Tujuan</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Active Goal Display -->
+          <div class="active-goal reveal" id="activeGoal" style="display:none;">
+            <div class="goal-header">
+              <h3><i class="fas fa-trophy"></i> <span id="activeGoalName">-</span></h3>
+              <button class="btn btn-sm btn-danger" id="deleteGoalBtn"><i class="fas fa-trash"></i> Hapus</button>
+            </div>
+            <div class="goal-progress-section">
+              <div class="goal-stats">
+                <div class="goal-stat">
+                  <span class="goal-stat-label">Target</span>
+                  <span class="goal-stat-value" id="displayTarget">Rp 0</span>
+                </div>
+                <div class="goal-stat">
+                  <span class="goal-stat-label">Tersimpan</span>
+                  <span class="goal-stat-value text-success" id="displaySaved">Rp 0</span>
+                </div>
+                <div class="goal-stat">
+                  <span class="goal-stat-label">Sisa Bulan</span>
+                  <span class="goal-stat-value" id="displayMonthsLeft">-</span>
+                </div>
+                <div class="goal-stat">
+                  <span class="goal-stat-label">Setoran/Bulan</span>
+                  <span class="goal-stat-value text-accent" id="displayMonthly">Rp 0</span>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar">
+                  <div class="progress-fill" id="goalProgressFill" style="width:0%"></div>
+                </div>
+                <span class="progress-percent" id="goalProgressPercent">0%</span>
+              </div>
+              <div class="goal-insight" id="goalInsight"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Setor -->
+        <div class="tab-content" id="tab-deposit">
+          <div class="deposit-card reveal">
+            <div class="deposit-illustration"><i class="fas fa-hand-holding-usd"></i></div>
+            <h3>Catat Setoran Harian</h3>
+            <form id="depositForm" class="form-grid">
+              <div class="form-group">
+                <label><i class="fas fa-calendar-day"></i> Tanggal</label>
+                <input type="date" id="depositDate" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-money-bill"></i> Jumlah (Rp)</label>
+                <input type="number" id="depositAmount" placeholder="50000" min="100" required>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-sticky-note"></i> Catatan (opsional)</label>
+                <input type="text" id="depositNote" placeholder="contoh: Dari gaji">
+              </div>
+              <div class="form-group form-full">
+                <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-plus"></i> Tambah Setoran</button>
+              </div>
+            </form>
+          </div>
+          <div class="quick-deposit reveal">
+            <p><i class="fas fa-bolt"></i> Quick Deposit:</p>
+            <div class="quick-btns">
+              <button class="quick-btn" data-amount="10000">Rp 10rb</button>
+              <button class="quick-btn" data-amount="25000">Rp 25rb</button>
+              <button class="quick-btn" data-amount="50000">Rp 50rb</button>
+              <button class="quick-btn" data-amount="100000">Rp 100rb</button>
+              <button class="quick-btn" data-amount="200000">Rp 200rb</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Riwayat -->
+        <div class="tab-content" id="tab-history">
+          <div class="history-header reveal">
+            <h3><i class="fas fa-list-alt"></i> Riwayat Setoran</h3>
+            <div class="history-summary">
+              <div class="summary-item">
+                <span>Total Transaksi</span>
+                <strong id="totalTransactions">0</strong>
+              </div>
+              <div class="summary-item">
+                <span>Total Disetor</span>
+                <strong class="text-success" id="totalDeposited">Rp 0</strong>
+              </div>
+            </div>
+          </div>
+          <div class="history-list" id="historyList">
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>Belum ada riwayat setoran</p>
+            </div>
+          </div>
+          <div class="history-actions reveal" id="historyActions" style="display:none;">
+            <button class="btn btn-secondary btn-sm" id="exportHistoryBtn"><i class="fas fa-download"></i> Export CSV</button>
+            <button class="btn btn-danger btn-sm" id="clearHistoryBtn"><i class="fas fa-trash-alt"></i> Hapus Semua</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== KONVERTER ==================== -->
+    <section class="tool-section section alt-bg" id="konverter">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="section-icon icon-convert"><i class="fas fa-exchange-alt"></i></div>
+          <h2 class="section-title">Konverter</h2>
+          <p class="section-subtitle">Konversi suhu, gaya, panjang, berat, dan lainnya</p>
+        </div>
+
+        <!-- Converter Type Selector -->
+        <div class="converter-tabs reveal">
+          <button class="conv-tab active" data-converter="temperature"><i class="fas fa-thermometer-half"></i> Suhu</button>
+          <button class="conv-tab" data-converter="force"><i class="fas fa-arrows-alt-v"></i> Gaya</button>
+          <button class="conv-tab" data-converter="length"><i class="fas fa-ruler"></i> Panjang</button>
+          <button class="conv-tab" data-converter="weight"><i class="fas fa-weight-hanging"></i> Berat</button>
+          <button class="conv-tab" data-converter="trigo"><i class="fas fa-drafting-compass"></i> Trigonometri</button>
+          <button class="conv-tab" data-converter="area"><i class="fas fa-vector-square"></i> Luas</button>
+        </div>
+
+        <!-- Converter Panels -->
+        <div class="converter-panel reveal">
+
+          <!-- Temperature -->
+          <div class="conv-content active" id="conv-temperature">
+            <div class="conv-card">
+              <div class="conv-input-row">
+                <div class="conv-field">
+                  <label>Dari</label>
+                  <select id="tempFrom">
+                    <option value="C">Celsius (°C)</option>
+                    <option value="F">Fahrenheit (°F)</option>
+                    <option value="K">Kelvin (K)</option>
+                    <option value="R">Reamur (°R)</option>
+                  </select>
+                  <input type="number" id="tempValue" placeholder="Masukkan nilai" value="0">
+                </div>
+                <button class="swap-btn" id="swapTemp" title="Tukar"><i class="fas fa-exchange-alt"></i></button>
+                <div class="conv-field">
+                  <label>Ke</label>
+                  <select id="tempTo">
+                    <option value="F">Fahrenheit (°F)</option>
+                    <option value="C">Celsius (°C)</option>
+                    <option value="K">Kelvin (K)</option>
+                    <option value="R">Reamur (°R)</option>
+                  </select>
+                  <input type="text" id="tempResult" readonly class="result-field" value="-">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-block" id="convertTemp"><i class="fas fa-calculator"></i> Konversi Suhu</button>
+            </div>
+            <div class="conv-formula">
+              <h4><i class="fas fa-book"></i> Rumus:</h4>
+              <ul>
+                <li><strong>F → C:</strong> (F − 32) × 5/9</li>
+                <li><strong>C → F:</strong> (C × 9/5) + 32</li>
+                <li><strong>C → K:</strong> C + 273.15</li>
+                <li><strong>C → R:</strong> C × 4/5</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Force -->
+          <div class="conv-content" id="conv-force">
+            <div class="conv-card">
+              <div class="conv-input-row">
+                <div class="conv-field">
+                  <label>Dari</label>
+                  <select id="forceFrom">
+                    <option value="N">Newton (N)</option>
+                    <option value="dyn">Dyne (dyn)</option>
+                    <option value="kgf">Kilogram-force (kgf)</option>
+                    <option value="lbf">Pound-force (lbf)</option>
+                  </select>
+                  <input type="number" id="forceValue" placeholder="Masukkan nilai" value="1">
+                </div>
+                <button class="swap-btn" id="swapForce" title="Tukar"><i class="fas fa-exchange-alt"></i></button>
+                <div class="conv-field">
+                  <label>Ke</label>
+                  <select id="forceTo">
+                    <option value="kgf">Kilogram-force (kgf)</option>
+                    <option value="N">Newton (N)</option>
+                    <option value="dyn">Dyne (dyn)</option>
+                    <option value="lbf">Pound-force (lbf)</option>
+                  </select>
+                  <input type="text" id="forceResult" readonly class="result-field" value="-">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-block" id="convertForce"><i class="fas fa-calculator"></i> Konversi Gaya</button>
+            </div>
+            <div class="conv-formula">
+              <h4><i class="fas fa-book"></i> Rumus:</h4>
+              <ul>
+                <li><strong>F = m × a</strong> (Gaya = Massa × Percepatan)</li>
+                <li><strong>1 N = 1 kg·m/s²</strong></li>
+                <li><strong>1 kgf = 9.80665 N</strong></li>
+                <li><strong>1 lbf = 4.44822 N</strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Length -->
+          <div class="conv-content" id="conv-length">
+            <div class="conv-card">
+              <div class="conv-input-row">
+                <div class="conv-field">
+                  <label>Dari</label>
+                  <select id="lengthFrom">
+                    <option value="m">Meter (m)</option>
+                    <option value="km">Kilometer (km)</option>
+                    <option value="cm">Centimeter (cm)</option>
+                    <option value="mm">Millimeter (mm)</option>
+                    <option value="mi">Mile (mi)</option>
+                    <option value="ft">Foot (ft)</option>
+                    <option value="in">Inch (in)</option>
+                  </select>
+                  <input type="number" id="lengthValue" placeholder="Masukkan nilai" value="1">
+                </div>
+                <button class="swap-btn" id="swapLength" title="Tukar"><i class="fas fa-exchange-alt"></i></button>
+                <div class="conv-field">
+                  <label>Ke</label>
+                  <select id="lengthTo">
+                    <option value="cm">Centimeter (cm)</option>
+                    <option value="m">Meter (m)</option>
+                    <option value="km">Kilometer (km)</option>
+                    <option value="mm">Millimeter (mm)</option>
+                    <option value="mi">Mile (mi)</option>
+                    <option value="ft">Foot (ft)</option>
+                    <option value="in">Inch (in)</option>
+                  </select>
+                  <input type="text" id="lengthResult" readonly class="result-field" value="-">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-block" id="convertLength"><i class="fas fa-calculator"></i> Konversi Panjang</button>
+            </div>
+          </div>
+
+          <!-- Weight -->
+          <div class="conv-content" id="conv-weight">
+            <div class="conv-card">
+              <div class="conv-input-row">
+                <div class="conv-field">
+                  <label>Dari</label>
+                  <select id="weightFrom">
+                    <option value="kg">Kilogram (kg)</option>
+                    <option value="g">Gram (g)</option>
+                    <option value="mg">Milligram (mg)</option>
+                    <option value="lb">Pound (lb)</option>
+                    <option value="oz">Ounce (oz)</option>
+                    <option value="ton">Ton (metrik)</option>
+                  </select>
+                  <input type="number" id="weightValue" placeholder="Masukkan nilai" value="1">
+                </div>
+                <button class="swap-btn" id="swapWeight" title="Tukar"><i class="fas fa-exchange-alt"></i></button>
+                <div class="conv-field">
+                  <label>Ke</label>
+                  <select id="weightTo">
+                    <option value="g">Gram (g)</option>
+                    <option value="kg">Kilogram (kg)</option>
+                    <option value="mg">Milligram (mg)</option>
+                    <option value="lb">Pound (lb)</option>
+                    <option value="oz">Ounce (oz)</option>
+                    <option value="ton">Ton (metrik)</option>
+                  </select>
+                  <input type="text" id="weightResult" readonly class="result-field" value="-">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-block" id="convertWeight"><i class="fas fa-calculator"></i> Konversi Berat</button>
+            </div>
+          </div>
+
+          <!-- Trigonometry -->
+          <div class="conv-content" id="conv-trigo">
+            <div class="trigo-cards">
+              <div class="trio-card">
+                <div class="trio-header"><i class="fas fa-angle-right"></i> Sinus (sin)</div>
+                <div class="trio-inputs">
+                  <input type="number" id="sinVal" placeholder="Sudut (derajat)" value="30">
+                  <button class="btn btn-sm btn-primary" id="calcSin">Hitung</button>
+                </div>
+                <div class="trio-result" id="sinRes">= 0.5000</div>
+              </div>
+              <div class="trio-card">
+                <div class="trio-header"><i class="fas fa-angle-right"></i> Cosinus (cos)</div>
+                <div class="trio-inputs">
+                  <input type="number" id="cosVal" placeholder="Sudut (derajat)" value="60">
+                  <button class="btn btn-sm btn-primary" id="calcCos">Hitung</button>
+                </div>
+                <div class="trio-result" id="cosRes">= 0.5000</div>
+              </div>
+              <div class="trio-card">
+                <div class="trio-header"><i class="fas fa-angle-right"></i> Tangen (tan)</div>
+                <div class="trio-inputs">
+                  <input type="number" id="tanVal" placeholder="Sudut (derajat)" value="45">
+                  <button class="btn btn-sm btn-primary" id="calcTan">Hitung</button>
+                </div>
+                <div class="trio-result" id="tanRes">= 1.0000</div>
+              </div>
+            </div>
+            <div class="trigo-extra">
+              <h4><i class="fas fa-calculator"></i> Kalkulasi Lainnya:</h4>
+              <div class="extra-grid">
+                <div class="extra-item">
+                  <label>Sudut (°)</label>
+                  <input type="number" id="extraAngle" placeholder="45" value="45">
+                </div>
+                <div class="extra-item">
+                  <label>Fungsi</label>
+                  <select id="extraFunc">
+                    <option value="asin">Arcsin (sin⁻¹)</option>
+                    <option value="acos">Arccos (cos⁻¹)</option>
+                    <option value="atan">Arctan (tan⁻¹)</option>
+                    <option value="csc">Cosecan (csc)</option>
+                    <option value="sec">Secan (sec)</option>
+                    <option value="cot">Cotangen (cot)</option>
+                  </select>
+                </div>
+                <div class="extra-item extra-btn-wrap">
+                  <button class="btn btn-primary" id="calcExtraTrigo">Hitung</button>
+                </div>
+                <div class="extra-item">
+                  <label>Hasil</label>
+                  <input type="text" id="extraTrigoRes" readonly class="result-field" value="-">
+                </div>
+              </div>
+            </div>
+            <div class="conv-formula">
+              <h4><i class="fas fa-book"></i> Rumus Dasar:</h4>
+              <ul>
+                <li><strong>sin(θ) = sisi depan / sisi miring</strong></li>
+                <li><strong>cos(θ) = sisi samping / sisi miring</strong></li>
+                <li><strong>tan(θ) = sisi depan / sisi samping</strong></li>
+                <li><strong>sin²θ + cos²θ = 1</strong> (Identitas Pythagoras)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Area -->
+          <div class="conv-content" id="conv-area">
+            <div class="conv-card">
+              <div class="conv-input-row">
+                <div class="conv-field">
+                  <label>Dari</label>
+                  <select id="areaFrom">
+                    <option value="m2">Meter² (m²)</option>
+                    <option value="km2">Kilometer² (km²)</option>
+                    <option value="cm2">Centimeter² (cm²)</option>
+                    <option value="ha">Hektare (ha)</option>
+                    <option value="acre">Acre</option>
+                    <option value="ft2">Foot² (ft²)</option>
+                  </select>
+                  <input type="number" id="areaValue" placeholder="Masukkan nilai" value="1">
+                </div>
+                <button class="swap-btn" id="swapArea" title="Tukar"><i class="fas fa-exchange-alt"></i></button>
+                <div class="conv-field">
+                  <label>Ke</label>
+                  <select id="areaTo">
+                    <option value="ha">Hektare (ha)</option>
+                    <option value="m2">Meter² (m²)</option>
+                    <option value="km2">Kilometer² (km²)</option>
+                    <option value="cm2">Centimeter² (cm²)</option>
+                    <option value="acre">Acre</option>
+                    <option value="ft2">Foot² (ft²)</option>
+                  </select>
+                  <input type="text" id="areaResult" readonly class="result-field" value="-">
+                </div>
+              </div>
+              <button class="btn btn-primary btn-block" id="convertArea"><i class="fas fa-calculator"></i> Konversi Luas</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <p class="footer-brand"><i class="fas fa-chart-line"></i> <strong>FinanceHub</strong></p>
+        <p class="footer-text">Tools keuangan & matematika untuk semua orang.</p>
+        <p class="footer-copy">&copy; <span id="year"></span> Daniel Ali Rassya. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

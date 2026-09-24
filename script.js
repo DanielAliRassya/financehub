@@ -74,6 +74,7 @@
   function initActiveNav() {
     const sections = document.querySelectorAll('.tool-section, .hero');
     const navLinks = document.querySelectorAll('.nav-link');
+    const navTriggers = document.querySelectorAll('.nav-trigger');
     
     function showSection(id) {
       sections.forEach(function (s) { s.classList.remove('active-view'); });
@@ -88,6 +89,13 @@
 
     navLinks.forEach(function (link) {
       link.addEventListener('click', function (e) {
+        e.preventDefault();
+        showSection(this.getAttribute('href'));
+      });
+    });
+
+    navTriggers.forEach(function (trigger) {
+      trigger.addEventListener('click', function (e) {
         e.preventDefault();
         showSection(this.getAttribute('href'));
       });

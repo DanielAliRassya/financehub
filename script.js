@@ -457,8 +457,28 @@
     const totalExEl = document.getElementById('finTotalExpense');
     const clearBtn = document.getElementById('clearFinBtn');
     const dateInput = document.getElementById('finDate');
+    const photoInput = document.getElementById('finPhoto');
+    const photoPreview = document.getElementById('finPhotoPreview');
+    const photoImg = document.getElementById('finPhotoImg');
+    const photoRemove = document.getElementById('finPhotoRemove');
+    let currentPhotoBase64 = null;
 
     if (dateInput) dateInput.valueAsDate = new Date();
+
+    // Photo upload handlers
+    if (photoInput) {
+      photoInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { alert('Ukuran foto maksimal 2MB'); photoInput.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = function (ev) { currentPhotoBase64 = ev.target.result; photoImg.src = currentPhotoBase64; photoPreview.style.display = 'block'; };
+        reader.readAsDataURL(file);
+      });
+    }
+    if (photoRemove) {
+      photoRemove.addEventListener('click', function () { currentPhotoBase64 = null; photoInput.value = ''; photoPreview.style.display = 'none'; });
+    }
 
     function loadFin() {
       try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s); } catch (e) {}
@@ -519,12 +539,14 @@
 
       listEl.innerHTML = sorted.map(function (t) {
         var isIncome = t.type === 'income';
+        var photoHTML = t.photo ? '<div style="margin-top:8px;"><img src="' + t.photo + '" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer;" onclick="window.open(this.src)" title="Klik untuk perbesar"></div>' : '';
         return '<div class="history-item">' +
           '<div class="history-item-info">' +
             '<div class="history-item-icon" style="background:' + (isIncome ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') + ';color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '"><i class="fas ' + (isIncome ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i></div>' +
             '<div class="history-item-text">' +
               '<span class="date">' + t.date + '</span>' +
-              '<span class="note">' + escapeHtml(t.note) + '</span>' +
+              '<span class="note">' + escapeHtml(t.note) + (t.photo ? ' <i class="fas fa-camera" style="color:var(--color-accent-1);"></i>' : '') + '</span>' +
+              photoHTML +
             '</div>' +
           '</div>' +
           '<div class="history-item-amount" style="color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '">' + (isIncome ? '+' : '-') + formatRp(t.amount) + '</div>' +
@@ -542,13 +564,16 @@
           note: document.getElementById('finNote').value.trim(),
           amount: parseFloat(document.getElementById('finAmount').value),
           type: document.getElementById('finType').value,
+          photo: currentPhotoBase64 || null,
         };
         data.transactions.push(tx);
         saveFin();
         render();
         var label = tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran';
-        showToast('✓ ' + label + ' Tercatat', formatRp(tx.amount) + ' — ' + tx.note, 'success');
+        showToast('✓ ' + label + ' Tercatat', formatRp(tx.amount) + ' — ' + tx.note + (tx.photo ? ' (+ Foto)' : ''), 'success');
         form.reset();
+        currentPhotoBase64 = null;
+        if (photoPreview) photoPreview.style.display = 'none';
         if (dateInput) dateInput.valueAsDate = new Date();
       });
     }

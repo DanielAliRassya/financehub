@@ -321,16 +321,25 @@
                 <label><i class="fas fa-calendar"></i> Tanggal</label>
                 <input type="date" id="finDate" required>
               </div>
+              <div class="form-group" style="grid-column:1/-1;">
+                <label><i class="fas fa-camera"></i> Foto Bukti (Opsional, max 2MB)</label>
+                <input type="file" id="finPhoto" accept="image/*" style="padding:10px;border:2px dashed var(--border-color);border-radius:8px;width:100%;cursor:pointer;">
+                <div id="finPhotoPreview" style="margin-top:8px;display:none;">
+                  <img id="finPhotoImg" src="" alt="Preview" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border-color);">
+                  <button type="button" id="finPhotoRemove" class="btn btn-danger btn-sm" style="margin-top:8px;"><i class="fas fa-trash"></i> Hapus Foto</button>
+                </div>
+              </div>
               <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-save"></i> Simpan Transaksi</button>
             </form>
           </div>
           <div class="active-goal" style="margin-top:24px;">
             <div class="goal-header">
-              <h3><i class="fas fa-history"></i> Ringkasan & Riwayat</h3>
-              <button class="btn btn-secondary btn-sm" id="clearFinBtn">Reset</button>
+              <h3><i class="fas fa-history"></i> Riwayat Setoran</h3>
+              <button class="btn btn-secondary btn-sm" id="exportHistoryBtn"><i class="fas fa-download"></i> Export CSV</button>
             </div>
-            <div class="goal-stats">
-              <div class="goal-stat">
+            <div id="historyList" class="history-list" style="margin-top:16px;"></div>
+            <div id="calendarView" class="calendar-view" style="margin-top:24px;"></div>
+          </div>
                 <span class="goal-stat-label">Total Masuk</span>
                 <strong class="goal-stat-value text-success" id="finTotalIncome">Rp 0</strong>
               </div>

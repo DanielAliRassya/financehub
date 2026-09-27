@@ -829,14 +829,26 @@
 
   // ===== SAVINGS TRACKER =====
   function initSavings() {
-    const STORAGE_KEY = 'financehub_savings_v1';
+    const STORAGE_KEY = 'financehub_savings_v2';
     let data = loadData();
 
     const goalForm = document.getElementById('goalForm');
     const depositForm = document.getElementById('depositForm');
     const activeGoalEl = document.getElementById('activeGoal');
+    const goalsListWrap = document.getElementById('goalsListWrap');
+    const goalsListEl = document.getElementById('goalsList');
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+
+    // Calendar state
+    let calMonth = (function () {
+      var n = new Date();
+      return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+    })();
+    const calMonthInput = document.getElementById('calMonth');
+    const calGoalSelect = document.getElementById('calGoalSelect');
+    if (calMonthInput) calMonthInput.value = calMonth;
+    let calGoalId = null;
 
     // Tab switching
     tabButtons.forEach(function (btn) {
@@ -848,21 +860,24 @@
       });
     });
 
-    // Goal form
+    // Goal form → add goal to list
     if (goalForm) {
       goalForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        data.goal = {
+        var goal = {
+          id: Date.now(),
           name: document.getElementById('goalName').value.trim(),
           amount: parseFloat(document.getElementById('goalAmount').value),
           months: parseInt(document.getElementById('goalMonths').value),
           created: new Date().toISOString(),
         };
+        if (!data.goals) data.goals = [];
+        data.goals.push(goal);
         saveData();
-        renderGoal();
+        renderGoals();
         goalForm.reset();
-        showToast('✓ Tujuan Berhasil', 'Target tabungan "' + data.goal.name + '" telah disimpan!', 'success');
-        tabButtons[1].click();
+        showToast('✓ Tujuan Berhasil', 'Target tabungan "' + goal.name + '" ditambahkan!', 'success');
+        tabButtons[0].click();
       });
     }
 
@@ -873,17 +888,21 @@
 
       depositForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        if (!data.goal) { alert('Buat tujuan tabungan terlebih dahulu!'); return; }
+        var goal = getCurrentGoal();
+        if (!goal) { alert('Buat tujuan tabungan terlebih dahulu!'); return; }
         const dep = {
           id: Date.now(),
+          goalId: goal.id,
           date: document.getElementById('depositDate').value,
           amount: parseFloat(document.getElementById('depositAmount').value),
           note: document.getElementById('depositNote').value.trim() || 'Setoran',
         };
+        if (!data.deposits) data.deposits = [];
         data.deposits.push(dep);
         saveData();
-        renderGoal();
+        renderGoals();
         renderHistory();
+        renderCalendar();
         showToast('✓ Setoran Tercatat', 'Rp ' + dep.amount.toLocaleString('id-ID') + ' berhasil ditambahkan!', 'success');
         depositForm.reset();
         if (depositDate) depositDate.valueAsDate = new Date();
@@ -893,52 +912,67 @@
     // Quick deposit buttons
     document.querySelectorAll('.quick-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!data.goal) { alert('Buat tujuan tabungan terlebih dahulu!'); return; }
+        var goal = getCurrentGoal();
+        if (!goal) { alert('Buat tujuan tabungan terlebih dahulu!'); return; }
         const amount = parseFloat(this.getAttribute('data-amount'));
         const dep = {
           id: Date.now(),
+          goalId: goal.id,
           date: new Date().toISOString().split('T')[0],
           amount: amount,
           note: 'Quick deposit',
         };
+        if (!data.deposits) data.deposits = [];
         data.deposits.push(dep);
         saveData();
-        renderGoal();
+        renderGoals();
         renderHistory();
+        renderCalendar();
       });
     });
 
-    // Delete goal
-    document.getElementById('deleteGoalBtn')?.addEventListener('click', function () {
-      if (confirm('Hapus tujuan dan riwayat tabungan?')) {
-        data = { goal: null, deposits: [] };
-        saveData();
-        renderGoal();
-        renderHistory();
+    function getCurrentGoal() {
+      if (!data.goals || !data.goals.length) return null;
+      // active = selected calendar goal, else first
+      if (calGoalId) {
+        var found = data.goals.find(function (g) { return g.id === calGoalId; });
+        if (found) return found;
       }
+      return data.goals[0];
+    }
+
+    // Calendar controls
+    if (calMonthInput) calMonthInput.addEventListener('change', function () { calMonth = this.value; renderCalendar(); });
+    var calTodayBtn = document.getElementById('calMonthToday');
+    if (calTodayBtn) calTodayBtn.addEventListener('click', function () {
+      var n = new Date();
+      calMonth = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+      if (calMonthInput) calMonthInput.value = calMonth;
+      renderCalendar();
+    });
+    if (calGoalSelect) calGoalSelect.addEventListener('change', function () {
+      calGoalId = this.value ? parseInt(this.value) : null;
+      renderCalendar();
     });
 
-    // Clear history
-    document.getElementById('clearHistoryBtn')?.addEventListener('click', function () {
-      if (confirm('Hapus semua riwayat setoran?')) {
-        data.deposits = [];
-        saveData();
-        renderGoal();
-        renderHistory();
-      }
-    });
-
-    // Export CSV
-    document.getElementById('exportHistoryBtn')?.addEventListener('click', function () {
-      exportCSV(data.deposits);
-    });
-
+    // Migrate old single-goal format → goals array
     function loadData() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          var d = JSON.parse(saved);
+          if (d && Array.isArray(d.goals)) return d;
+          // migrate v1: { goal: {...}, deposits: [...] }
+          if (d && d.goal) {
+            var g = Object.assign({ id: Date.now() }, d.goal);
+            var deps = (d.deposits || []).map(function (dep) {
+              return Object.assign({ goalId: g.id }, dep);
+            });
+            return { goals: [g], deposits: deps };
+          }
+        }
       } catch (e) {}
-      return { goal: null, deposits: [] };
+      return { goals: [], deposits: [] };
     }
 
     function saveData() {
@@ -950,36 +984,193 @@
       return 'Rp ' + num.toLocaleString('id-ID');
     }
 
-    function renderGoal() {
-      if (!data.goal) {
-        activeGoalEl.style.display = 'none';
+    function goalDeposits(goalId) {
+      return (data.deposits || []).filter(function (d) { return d.goalId === goalId; });
+    }
+
+    // Delete one goal (+ its deposits)
+    window.__delGoal = function (id) {
+      var g = (data.goals || []).find(function (x) { return x.id === id; });
+      if (!g) return;
+      if (!confirm('Hapus tujuan "' + g.name + '" dan semua setorannya?')) return;
+      data.goals = data.goals.filter(function (x) { return x.id !== id; });
+      data.deposits = (data.deposits || []).filter(function (d) { return d.goalId !== id; });
+      if (calGoalId === id) calGoalId = null;
+      saveData();
+      renderGoals();
+      renderHistory();
+      renderCalendar();
+      showToast('✓ Dihapus', 'Tujuan "' + g.name + '" dihapus', 'success');
+    };
+
+    // Delete one deposit
+    window.__delDeposit = function (id) {
+      var dep = (data.deposits || []).find(function (d) { return d.id === id; });
+      if (!dep) return;
+      if (!confirm('Hapus setoran ' + formatRupiah(dep.amount) + ' (' + dep.date + ')?')) return;
+      data.deposits = data.deposits.filter(function (d) { return d.id !== id; });
+      saveData();
+      renderGoals();
+      renderHistory();
+      renderCalendar();
+      showToast('✓ Dihapus', 'Setoran ' + formatRupiah(dep.amount) + ' dihapus', 'success');
+    };
+
+    function renderGoals() {
+      var goals = data.goals || [];
+      if (!goals.length) {
+        if (goalsListWrap) goalsListWrap.style.display = 'none';
+        if (activeGoalEl) activeGoalEl.style.display = 'none';
+        refreshCalGoalSelect();
         return;
       }
-      activeGoalEl.style.display = 'block';
-      document.getElementById('activeGoalName').textContent = data.goal.name;
-      document.getElementById('displayTarget').textContent = formatRupiah(data.goal.amount);
+      if (goalsListWrap) goalsListWrap.style.display = 'block';
 
-      const saved = data.deposits.reduce(function (sum, d) { return sum + d.amount; }, 0);
-      document.getElementById('displaySaved').textContent = formatRupiah(saved);
+      var html = goals.map(function (g) {
+        var deps = goalDeposits(g.id);
+        var saved = deps.reduce(function (s, d) { return s + d.amount; }, 0);
+        var percent = Math.min(100, (saved / g.amount) * 100);
+        var remaining = Math.max(0, g.amount - saved);
+        var monthly = g.months > 0 ? Math.ceil(remaining / g.months) : 0;
+        var done = saved >= g.amount;
+        return '<div class="goal-item" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' +
+            '<h4 style="font-size:1.05rem;font-weight:700;"><i class="fas fa-bullseye" style="color:var(--accent-primary);"></i> ' + escapeHtml(g.name) + (done ? ' <span class="text-success">✓</span>' : '') + '</h4>' +
+            '<button class="btn btn-danger btn-xs" onclick="window.__delGoal(' + g.id + ')" title="Hapus tujuan"><i class="fas fa-trash"></i></button>' +
+          '</div>' +
+          '<div class="goal-stats">' +
+            '<div class="goal-stat"><span class="goal-stat-label">Target</span><strong class="goal-stat-value">' + formatRupiah(g.amount) + '</strong></div>' +
+            '<div class="goal-stat"><span class="goal-stat-label">Tersimpan</span><strong class="goal-stat-value text-success">' + formatRupiah(saved) + '</strong></div>' +
+            '<div class="goal-stat"><span class="goal-stat-label">Sisa Bulan</span><strong class="goal-stat-value">' + Math.max(0, g.months) + '</strong></div>' +
+            '<div class="goal-stat"><span class="goal-stat-label">Setoran/Bulan</span><strong class="goal-stat-value text-accent">' + formatRupiah(monthly) + '</strong></div>' +
+          '</div>' +
+          '<div class="progress-bar-wrap" style="margin-top:12px;">' +
+            '<div class="progress-bar"><div class="progress-fill" style="width:' + percent + '%"></div></div>' +
+            '<span class="progress-percent">' + percent.toFixed(1) + '%</span>' +
+          '</div>' +
+          '<div style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;">' +
+            (done ? '<i class="fas fa-trophy" style="color:var(--accent-warning);"></i> Target tercapai! 🎉' :
+              '<i class="fas fa-chart-line"></i> Sisa: <strong>' + formatRupiah(remaining) + '</strong> · ' + deps.length + ' setoran') +
+          '</div>' +
+        '</div>';
+      }).join('');
+      if (goalsListEl) goalsListEl.innerHTML = html;
+      refreshCalGoalSelect();
+    }
 
-      const monthsLeft = Math.max(0, data.goal.months);
-      document.getElementById('displayMonthsLeft').textContent = monthsLeft + ' bulan';
+    function refreshCalGoalSelect() {
+      if (!calGoalSelect) return;
+      var goals = data.goals || [];
+      var html = '<option value="">Semua Tujuan</option>';
+      goals.forEach(function (g) {
+        html += '<option value="' + g.id + '"' + (calGoalId === g.id ? ' selected' : '') + '>' + escapeHtml(g.name) + '</option>';
+      });
+      calGoalSelect.innerHTML = html;
+    }
 
-      const remaining = Math.max(0, data.goal.amount - saved);
-      const monthly = monthsLeft > 0 ? Math.ceil(remaining / monthsLeft) : 0;
-      document.getElementById('displayMonthly').textContent = formatRupiah(monthly);
+    function renderCalendar() {
+      var el = document.getElementById('calendarView');
+      var summaryEl = document.getElementById('calSummary');
+      if (!el) return;
 
-      const percent = Math.min(100, (saved / data.goal.amount) * 100);
-      document.getElementById('goalProgressFill').style.width = percent + '%';
-      document.getElementById('goalProgressPercent').textContent = percent.toFixed(1) + '%';
+      var parts = calMonth.split('-');
+      var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
+      var monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-      const insightEl = document.getElementById('goalInsight');
-      if (saved >= data.goal.amount) {
-        insightEl.innerHTML = '<i class="fas fa-trophy"></i> Selamat! Target tabungan tercapai! 🎉';
-      } else {
-        const remainingAmount = data.goal.amount - saved;
-        insightEl.innerHTML = '<i class="fas fa-chart-line"></i> Sisa yang perlu ditabung: <strong>' + formatRupiah(remainingAmount) + '</strong>. Tetap konsisten!';
+      // deposits this month (optionally filtered by goal)
+      var monthDeps = (data.deposits || []).filter(function (d) {
+        if (!d.date) return false;
+        if (d.date.slice(0, 7) !== calMonth) return false;
+        if (calGoalId && d.goalId !== calGoalId) return false;
+        return true;
+      });
+
+      var totalMonth = monthDeps.reduce(function (s, d) { return s + d.amount; }, 0);
+      var daysWithDeposit = new Set(monthDeps.map(function (d) { return d.date; })).size;
+
+      if (summaryEl) {
+        summaryEl.innerHTML = '<div class="goal-stats">' +
+          '<div class="goal-stat"><span class="goal-stat-label">Total ' + monthNames[m] + '</span><strong class="goal-stat-value text-success">' + formatRupiah(totalMonth) + '</strong></div>' +
+          '<div class="goal-stat"><span class="goal-stat-label">Setoran</span><strong class="goal-stat-value">' + monthDeps.length + '</strong></div>' +
+          '<div class="goal-stat"><span class="goal-stat-label">Hari Aktif</span><strong class="goal-stat-value">' + daysWithDeposit + '</strong></div>' +
+        '</div>';
       }
+
+      if (!monthDeps.length) {
+        el.innerHTML = '<div class="empty-state"><i class="fas fa-calendar"></i><p>Belum ada setoran di ' + monthNames[m] + ' ' + y + '</p></div>';
+        return;
+      }
+
+      // group deposits by date
+      var byDate = {};
+      monthDeps.forEach(function (d) {
+        if (!byDate[d.date]) byDate[d.date] = [];
+        byDate[d.date].push(d);
+      });
+
+      var firstDay = new Date(y, m, 1).getDay(); // 0=Sun
+      var daysInMonth = new Date(y, m + 1, 0).getDate();
+      var dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+      var html = '<div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:14px;">';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">';
+      dayNames.forEach(function (dn) {
+        html += '<div style="text-align:center;font-size:0.72rem;font-weight:700;color:var(--text-muted);padding:4px 0;">' + dn + '</div>';
+      });
+      html += '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+      for (var pad = 0; pad < firstDay; pad++) html += '<div></div>';
+      for (var d = 1; d <= daysInMonth; d++) {
+        var key = calMonth + '-' + String(d).padStart(2, '0');
+        var deps = byDate[key] || [];
+        var dayTotal = deps.reduce(function (s, x) { return s + x.amount; }, 0);
+        var hasMoney = dayTotal > 0;
+        var today = new Date();
+        var isToday = (today.getFullYear() === y && today.getMonth() === m && today.getDate() === d);
+        var cellStyle = 'min-height:64px;border-radius:8px;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid ';
+        if (hasMoney) {
+          cellStyle += 'rgba(16,185,129,0.4);background:rgba(16,185,129,0.08);';
+        } else {
+          cellStyle += 'var(--border-color);background:var(--bg-tertiary);';
+        }
+        if (isToday) cellStyle += 'outline:2px solid var(--accent-primary);outline-offset:1px;';
+        html += '<div style="' + cellStyle + '" title="' + key + ': ' + formatRupiah(dayTotal) + '">' +
+          '<span style="font-size:0.72rem;font-weight:700;color:' + (hasMoney ? 'var(--accent-success)' : 'var(--text-muted)') + ';">' + d + '</span>' +
+          (hasMoney ? '<span style="font-size:0.6rem;color:var(--accent-success);font-weight:700;">+' + Math.round(dayTotal / 1000) + 'rb</span>' : '') +
+        '</div>';
+      }
+      html += '</div>';
+      // legend + detail list
+      html += '<div style="display:flex;gap:16px;justify-content:center;font-size:0.75rem;margin-top:12px;flex-wrap:wrap;">' +
+        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(16,185,129,0.3);border:1px solid rgba(16,185,129,0.4);border-radius:3px;display:inline-block;"></span> Ada setoran (+rb)</span>' +
+        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:3px;display:inline-block;"></span> Kosong</span>' +
+      '</div>';
+      html += '</div>';
+
+      // detail list below calendar
+      var sorted = monthDeps.slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+      html += '<div style="margin-top:16px;">' +
+        '<h4 style="font-size:0.95rem;font-weight:700;margin-bottom:10px;"><i class="fas fa-list-ul" style="color:var(--accent-success);"></i> Detail Setoran ' + monthNames[m] + ' ' + y + '</h4>' +
+        sorted.map(function (d) {
+          var gname = '';
+          var g = (data.goals || []).find(function (x) { return x.id === d.goalId; });
+          if (g) gname = ' · <i class="fas fa-bullseye" style="color:var(--accent-primary);font-size:0.7rem;"></i> ' + escapeHtml(g.name);
+          return '<div class="history-item">' +
+            '<div class="history-item-info">' +
+              '<div class="history-item-icon" style="background:rgba(16,185,129,0.1);color:var(--accent-success);"><i class="fas fa-arrow-down"></i></div>' +
+              '<div class="history-item-text">' +
+                '<span class="date">' + d.date + gname + '</span>' +
+                '<span class="note">' + escapeHtml(d.note) + '</span>' +
+                '<div class="history-item-actions">' +
+                  '<button class="btn btn-danger btn-xs" onclick="window.__delDeposit(' + d.id + ')" title="Hapus"><i class="fas fa-trash"></i></button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="history-item-amount text-success">+' + formatRupiah(d.amount) + '</div>' +
+          '</div>';
+        }).join('') + '</div>';
+
+      el.innerHTML = html;
     }
 
     function renderHistory() {
@@ -988,7 +1179,10 @@
       const totalTrans = document.getElementById('totalTransactions');
       const totalDep = document.getElementById('totalDeposited');
 
-      const sorted = data.deposits.slice().sort(function (a, b) {
+      var allDeps = data.deposits || [];
+      if (calGoalId) allDeps = allDeps.filter(function (d) { return d.goalId === calGoalId; });
+
+      const sorted = allDeps.slice().sort(function (a, b) {
         const da = new Date(a.date || 0), db = new Date(b.date || 0);
         return (db.getTime() || 0) - (da.getTime() || 0);
       });
@@ -1005,23 +1199,31 @@
 
       if (actions) actions.style.display = 'flex';
       list.innerHTML = sorted.map(function (d) {
+        var gname = '';
+        var g = (data.goals || []).find(function (x) { return x.id === d.goalId; });
+        if (g) gname = ' · <i class="fas fa-bullseye" style="color:var(--accent-primary);font-size:0.7rem;"></i> ' + escapeHtml(g.name);
         return '<div class="history-item">' +
           '<div class="history-item-info">' +
-            '<div class="history-item-icon"><i class="fas fa-arrow-down"></i></div>' +
+            '<div class="history-item-icon" style="background:rgba(16,185,129,0.1);color:var(--accent-success);"><i class="fas fa-arrow-down"></i></div>' +
             '<div class="history-item-text">' +
-              '<span class="date">' + d.date + '</span>' +
+              '<span class="date">' + d.date + gname + '</span>' +
               '<span class="note">' + escapeHtml(d.note) + '</span>' +
+              '<div class="history-item-actions">' +
+                '<button class="btn btn-danger btn-xs" onclick="window.__delDeposit(' + d.id + ')" title="Hapus"><i class="fas fa-trash"></i></button>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="history-item-amount">' + formatRupiah(d.amount) + '</div>' +
+          '<div class="history-item-amount text-success">+' + formatRupiah(d.amount) + '</div>' +
         '</div>';
       }).join('');
     }
 
     function exportCSV(deposits) {
-      let csv = 'Tanggal,Catatan,Jumlah\n';
+      var goals = data.goals || [];
+      let csv = 'Tanggal,Tujuan,Catatan,Jumlah\n';
       deposits.forEach(function (d) {
-        csv += d.date + ',"' + d.note + '",' + d.amount + '\n';
+        var g = goals.find(function (x) { return x.id === d.goalId; });
+        csv += d.date + ',"' + (g ? g.name : '-') + '","' + d.note + '",' + d.amount + '\n';
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
@@ -1032,8 +1234,34 @@
       URL.revokeObjectURL(url);
     }
 
-    renderGoal();
+    // Export current view (respect goal filter)
+    var exportBtn2 = document.getElementById('exportHistoryBtn');
+    if (exportBtn2) exportBtn2.addEventListener('click', function () {
+      var allDeps = data.deposits || [];
+      if (calGoalId) allDeps = allDeps.filter(function (d) { return d.goalId === calGoalId; });
+      exportCSV(allDeps);
+    });
+
+    // Clear history (respect goal filter)
+    var clearBtn2 = document.getElementById('clearHistoryBtn');
+    if (clearBtn2) clearBtn2.addEventListener('click', function () {
+      var msg = calGoalId ? 'Hapus semua riwayat setoran tujuan ini?' : 'Hapus semua riwayat setoran?';
+      if (confirm(msg)) {
+        if (calGoalId) {
+          data.deposits = (data.deposits || []).filter(function (d) { return d.goalId !== calGoalId; });
+        } else {
+          data.deposits = [];
+        }
+        saveData();
+        renderGoals();
+        renderHistory();
+        renderCalendar();
+      }
+    });
+
+    renderGoals();
     renderHistory();
+    renderCalendar();
   }
 
   // ===== UNIT CONVERTERS =====

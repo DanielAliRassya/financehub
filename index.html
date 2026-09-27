@@ -161,6 +161,7 @@
           <button class="tab-btn active" data-tab="set-goal"><i class="fas fa-bullseye"></i> Tujuan</button>
           <button class="tab-btn" data-tab="deposit"><i class="fas fa-plus-circle"></i> Setor</button>
           <button class="tab-btn" data-tab="history"><i class="fas fa-history"></i> Riwayat</button>
+          <button class="tab-btn" data-tab="calendar"><i class="fas fa-calendar-alt"></i> Kalender</button>
         </div>
 
         <!-- Tab: Tujuan -->
@@ -189,39 +190,12 @@
             </form>
           </div>
 
-          <!-- Active Goal Display -->
-          <div class="active-goal reveal" id="activeGoal" style="display:none;">
+          <!-- Goals List (multi-goal) -->
+          <div class="active-goal reveal" id="goalsListWrap" style="display:none; margin-top:24px;">
             <div class="goal-header">
-              <h3><i class="fas fa-trophy"></i> <span id="activeGoalName">-</span></h3>
-              <button class="btn btn-sm btn-danger" id="deleteGoalBtn"><i class="fas fa-trash"></i> Hapus</button>
+              <h3><i class="fas fa-list"></i> Tujuan Saya</h3>
             </div>
-            <div class="goal-progress-section">
-              <div class="goal-stats">
-                <div class="goal-stat">
-                  <span class="goal-stat-label">Target</span>
-                  <span class="goal-stat-value" id="displayTarget">Rp 0</span>
-                </div>
-                <div class="goal-stat">
-                  <span class="goal-stat-label">Tersimpan</span>
-                  <span class="goal-stat-value text-success" id="displaySaved">Rp 0</span>
-                </div>
-                <div class="goal-stat">
-                  <span class="goal-stat-label">Sisa Bulan</span>
-                  <span class="goal-stat-value" id="displayMonthsLeft">-</span>
-                </div>
-                <div class="goal-stat">
-                  <span class="goal-stat-label">Setoran/Bulan</span>
-                  <span class="goal-stat-value text-accent" id="displayMonthly">Rp 0</span>
-                </div>
-              </div>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar">
-                  <div class="progress-fill" id="goalProgressFill" style="width:0%"></div>
-                </div>
-                <span class="progress-percent" id="goalProgressPercent">0%</span>
-              </div>
-              <div class="goal-insight" id="goalInsight"></div>
-            </div>
+            <div id="goalsList"></div>
           </div>
         </div>
 
@@ -284,6 +258,25 @@
           <div class="history-actions reveal" id="historyActions" style="display:none;">
             <button class="btn btn-secondary btn-sm" id="exportHistoryBtn"><i class="fas fa-download"></i> Export CSV</button>
             <button class="btn btn-danger btn-sm" id="clearHistoryBtn"><i class="fas fa-trash-alt"></i> Hapus Semua</button>
+          </div>
+        </div>
+
+        <!-- Tab: Kalender -->
+        <div class="tab-content" id="tab-calendar">
+          <div class="active-goal reveal">
+            <div class="goal-header">
+              <h3><i class="fas fa-calendar-alt"></i> Kalender Setoran</h3>
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <input type="month" id="calMonth" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:0.85rem;">
+                <button class="btn btn-primary btn-sm" id="calMonthToday">Bulan Ini</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin:12px 0 4px;">
+              <label><i class="fas fa-bullseye"></i> Pilih Tujuan</label>
+              <select id="calGoalSelect" style="width:100%;"></select>
+            </div>
+            <div id="calSummary" style="margin-bottom:16px;"></div>
+            <div id="calendarView"></div>
           </div>
         </div>
       </div>

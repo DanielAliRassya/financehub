@@ -11,6 +11,7 @@
     initScrollReveal();
     initSmoothScroll();
     initActiveNav();
+    initTheme();
     initCalculator();
     initMathSolver();
     initSavings();
@@ -18,6 +19,31 @@
     initConverters();
     initYear();
   });
+
+  // ===== Theme (dark/light) =====
+  function initTheme() {
+    const KEY = 'financehub_theme';
+    const toggle = document.getElementById('themeToggle');
+    const icon = document.getElementById('themeIcon');
+
+    function apply(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      try { localStorage.setItem(KEY, theme); } catch (e) {}
+    }
+
+    // Restore saved theme (default: light)
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    apply(saved === 'dark' ? 'dark' : 'light');
+
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var current = document.documentElement.getAttribute('data-theme');
+        apply(current === 'dark' ? 'light' : 'dark');
+      });
+    }
+  }
 
   // ===== Navbar =====
   function initNavbar() {

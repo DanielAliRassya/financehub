@@ -197,6 +197,7 @@ body {
 
 /* === Sections === */
 .section { padding: 80px 0; position: relative; }
+section.tool-section.active-view { padding-top: 140px; }
 .alt-bg { background: var(--bg-tertiary); }
 
 .section-header { text-align: center; margin-bottom: 48px; }

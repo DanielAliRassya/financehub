@@ -83,7 +83,9 @@
       if (target) {
         target.classList.add('active-view');
         navLinks.forEach(function (l) { if (l.getAttribute('href') === id) l.classList.add('active'); });
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
       }
     }
 
@@ -485,7 +487,10 @@
       return { transactions: [] };
     }
     function saveFin() { localStorage.setItem(KEY, JSON.stringify(data)); }
-    function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
+    function formatRp(n) {
+      if (typeof n !== 'number' || isNaN(n)) n = 0;
+      return 'Rp ' + n.toLocaleString('id-ID');
+    }
 
     function groupByDate() {
       var groups = {};
@@ -526,7 +531,10 @@
     }
 
     function render() {
-      const sorted = data.transactions.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+      const sorted = data.transactions.slice().sort(function (a, b) {
+        const da = new Date(a.date || 0), db = new Date(b.date || 0);
+        return (db.getTime() || 0) - (da.getTime() || 0);
+      });
       const totalIn = sorted.filter(function (t) { return t.type === 'income'; }).reduce(function (s, t) { return s + t.amount; }, 0);
       const totalEx = sorted.filter(function (t) { return t.type === 'expense'; }).reduce(function (s, t) { return s + t.amount; }, 0);
       totalInEl.textContent = formatRp(totalIn);
@@ -710,6 +718,7 @@
     }
 
     function formatRupiah(num) {
+      if (typeof num !== 'number' || isNaN(num)) num = 0;
       return 'Rp ' + num.toLocaleString('id-ID');
     }
 
@@ -751,7 +760,10 @@
       const totalTrans = document.getElementById('totalTransactions');
       const totalDep = document.getElementById('totalDeposited');
 
-      const sorted = data.deposits.slice().sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+      const sorted = data.deposits.slice().sort(function (a, b) {
+        const da = new Date(a.date || 0), db = new Date(b.date || 0);
+        return (db.getTime() || 0) - (da.getTime() || 0);
+      });
       const total = sorted.reduce(function (sum, d) { return sum + d.amount; }, 0);
 
       if (totalTrans) totalTrans.textContent = sorted.length;

@@ -509,8 +509,6 @@
     const searchInput = document.getElementById('finSearch');
     const filterSelect = document.getElementById('finFilterType');
     const monthInput = document.getElementById('finMonth');
-    const monthPrevBtn = document.getElementById('finMonthPrev');
-    const monthNextBtn = document.getElementById('finMonthNext');
     const monthTodayBtn = document.getElementById('finMonthToday');
 
     // Month state (YYYY-MM), default = current month
@@ -527,18 +525,7 @@
       });
     }
 
-    function shiftMonth(delta) {
-      var parts = analyticsMonth.split('-');
-      var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1 + delta;
-      var d = new Date(y, m, 1);
-      analyticsMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-      if (monthInput) monthInput.value = analyticsMonth;
-      renderChart();
-    }
-
     if (monthInput) monthInput.addEventListener('change', function () { analyticsMonth = this.value; renderChart(); });
-    if (monthPrevBtn) monthPrevBtn.addEventListener('click', function () { shiftMonth(-1); });
-    if (monthNextBtn) monthNextBtn.addEventListener('click', function () { shiftMonth(1); });
     if (monthTodayBtn) monthTodayBtn.addEventListener('click', function () {
       var n = new Date();
       analyticsMonth = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');

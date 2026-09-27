@@ -688,7 +688,7 @@
           '<div class="history-item-info">' +
             '<div class="history-item-icon" style="background:' + (isIncome ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') + ';color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '"><i class="fas ' + (isIncome ? 'fa-arrow-up' : 'fa-arrow-down') + '"></i></div>' +
             '<div class="history-item-text">' +
-              '<span class="date">' + t.date + '</span>' +
+              '<span class="date">' + t.date + (t.time ? ' · ' + t.time : '') + '</span>' +
               '<span class="note">' + escapeHtml(t.note) + (t.photo ? ' <i class="fas fa-camera" style="color:var(--color-accent-1);"></i>' : '') + '</span>' +
               photoHTML +
               '<div class="history-item-actions">' +
@@ -710,9 +710,13 @@
     if (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
+        var now = new Date();
+        var pad = function (n) { return String(n).padStart(2, '0'); };
         var tx = {
           id: Date.now(),
           date: document.getElementById('finDate').value,
+          time: pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()),
+          timestamp: now.toISOString(),
           note: document.getElementById('finNote').value.trim(),
           amount: parseFloat(document.getElementById('finAmount').value),
           type: document.getElementById('finType').value,

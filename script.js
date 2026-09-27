@@ -457,7 +457,7 @@
     const listEl = document.getElementById('finList');
     const totalInEl = document.getElementById('finTotalIncome');
     const totalExEl = document.getElementById('finTotalExpense');
-    const clearBtn = document.getElementById('clearFinBtn');
+    const clearBtn = document.getElementById('resetFinBtn');
     const dateInput = document.getElementById('finDate');
     const photoInput = document.getElementById('finPhoto');
     const photoPreview = document.getElementById('finPhotoPreview');
@@ -502,10 +502,65 @@
       return Object.keys(groups).sort().map(function (d) { return { date: d, income: groups[d].income, expense: groups[d].expense }; });
     }
 
+    // === Filter state ===
+    let searchQuery = '';
+    let filterType = 'all';
+
+    const searchInput = document.getElementById('finSearch');
+    const filterSelect = document.getElementById('finFilterType');
+    const analyticsRange = document.getElementById('finAnalyticsRange');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        searchQuery = this.value.toLowerCase().trim();
+        render();
+      });
+    }
+    if (filterSelect) {
+      filterSelect.addEventListener('change', function () {
+        filterType = this.value;
+        render();
+      });
+    }
+
+    function deleteTransaction(id) {
+      var idx = data.transactions.findIndex(function (t) { return t.id === id; });
+      if (idx === -1) return;
+      var tx = data.transactions[idx];
+      if (!confirm('Hapus transaksi "' + tx.note + '" (' + formatRp(tx.amount) + ')?')) return;
+      data.transactions.splice(idx, 1);
+      saveFin();
+      render();
+      showToast('✓ Dihapus', tx.note + ' — ' + formatRp(tx.amount), 'success');
+    }
+
+    function editTransaction(id) {
+      var tx = data.transactions.find(function (t) { return t.id === id; });
+      if (!tx) return;
+      var note = prompt('Edit catatan:', tx.note);
+      if (note === null) return;
+      var amountStr = prompt('Edit jumlah (Rp):', tx.amount);
+      if (amountStr === null) return;
+      var amount = parseFloat(amountStr);
+      if (!amount || amount <= 0 || isNaN(amount)) { showToast('✗ Gagal', 'Jumlah tidak valid', 'error'); return; }
+      tx.note = note.trim() || tx.note;
+      tx.amount = amount;
+      saveFin();
+      render();
+      showToast('✓ Diedit', tx.note + ' — ' + formatRp(tx.amount), 'success');
+    }
+
     function renderChart() {
       var chartEl = document.getElementById('finChart');
+      if (!chartEl) return;
+      var range = analyticsRange ? parseInt(analyticsRange.value) : 30;
       var grouped = groupByDate();
-      if (!grouped.length) { chartEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Belum cukup data untuk analitik</p></div>'; return; }
+      if (range > 0) grouped = grouped.slice(-range);
+      if (!grouped.length) {
+        chartEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Belum cukup data untuk analitik</p></div>';
+        renderCategoryBreakdown();
+        return;
+      }
       var maxVal = 0;
       grouped.forEach(function (g) { maxVal = Math.max(maxVal, g.income, g.expense); });
       if (maxVal === 0) maxVal = 1;
@@ -528,6 +583,68 @@
         '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-danger);border-radius:3px;display:inline-block;"></span> Pengeluaran</span>' +
       '</div>';
       chartEl.innerHTML = html;
+      renderCategoryBreakdown();
+      renderDailyStats();
+    }
+
+    function renderCategoryBreakdown() {
+      var el = document.getElementById('finCategoryBreakdown');
+      if (!el) return;
+      var incomeTotal = 0, expenseTotal = 0;
+      data.transactions.forEach(function (t) {
+        if (t.type === 'income') incomeTotal += t.amount;
+        else expenseTotal += t.amount;
+      });
+      if (!incomeTotal && !expenseTotal) { el.innerHTML = ''; return; }
+
+      var html = '<h4 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;"><i class="fas fa-layer-group" style="color:var(--accent-secondary);"></i> Ringkasan Kategori</h4>';
+      html += '<div class="goal-stats">';
+
+      if (incomeTotal) {
+        html += '<div class="goal-stat" style="border-left:3px solid var(--accent-success);">' +
+          '<span class="goal-stat-label">Pemasukan</span>' +
+          '<strong class="goal-stat-value text-success">' + formatRp(incomeTotal) + '</strong></div>';
+      }
+      if (expenseTotal) {
+        html += '<div class="goal-stat" style="border-left:3px solid var(--accent-danger);">' +
+          '<span class="goal-stat-label">Pengeluaran</span>' +
+          '<strong class="goal-stat-value" style="color:var(--accent-danger)">' + formatRp(expenseTotal) + '</strong></div>';
+      }
+      if (incomeTotal && expenseTotal) {
+        var net = incomeTotal - expenseTotal;
+        html += '<div class="goal-stat" style="border-left:3px solid var(--accent-primary);">' +
+          '<span class="goal-stat-label">Selisih (Net)</span>' +
+          '<strong class="goal-stat-value" style="color:' + (net >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)') + '">' + (net >= 0 ? '+' : '') + formatRp(net) + '</strong></div>';
+      }
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    function renderDailyStats() {
+      var el = document.getElementById('finDailyStats');
+      if (!el) return;
+      var grouped = groupByDate();
+      if (!grouped.length) { el.innerHTML = ''; return; }
+
+      var incomeDays = grouped.filter(function (g) { return g.income > 0; });
+      var expenseDays = grouped.filter(function (g) { return g.expense > 0; });
+      var avgIn = incomeDays.length ? incomeDays.reduce(function (s, g) { return s + g.income; }, 0) / incomeDays.length : 0;
+      var avgEx = expenseDays.length ? expenseDays.reduce(function (s, g) { return s + g.expense; }, 0) / expenseDays.length : 0;
+      var bestDay = grouped.reduce(function (a, b) { return b.income > a.income ? b : a; }, grouped[0]);
+      var worstDay = grouped.reduce(function (a, b) { return b.expense > a.expense ? b : a; }, grouped[0]);
+
+      var html = '<h4 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;"><i class="fas fa-calculator" style="color:var(--accent-warning);"></i> Statistik</h4>';
+      html += '<div class="goal-stats">';
+      html += '<div class="goal-stat"><span class="goal-stat-label">Rata-rata Masuk/Hari</span><strong class="goal-stat-value text-success" style="font-size:1rem;">' + formatRp(avgIn) + '</strong></div>';
+      html += '<div class="goal-stat"><span class="goal-stat-label">Rata-rata Keluar/Hari</span><strong class="goal-stat-value" style="color:var(--accent-danger);font-size:1rem;">' + formatRp(avgEx) + '</strong></div>';
+      html += '<div class="goal-stat"><span class="goal-stat-label">Hari Terbaik</span><strong class="goal-stat-value text-success" style="font-size:1rem;">' + bestDay.date.slice(5) + ' · ' + formatRp(bestDay.income) + '</strong></div>';
+      html += '<div class="goal-stat"><span class="goal-stat-label">Hari Boros</span><strong class="goal-stat-value" style="color:var(--accent-danger);font-size:1rem;">' + worstDay.date.slice(5) + ' · ' + formatRp(worstDay.expense) + '</strong></div>';
+      html += '</div>';
+      el.innerHTML = html;
+    }
+
+    if (analyticsRange) {
+      analyticsRange.addEventListener('change', function () { renderChart(); });
     }
 
     function render() {
@@ -535,17 +652,36 @@
         const da = new Date(a.date || 0), db = new Date(b.date || 0);
         return (db.getTime() || 0) - (da.getTime() || 0);
       });
+
+      // Totals (global, unaffected by filter)
       const totalIn = sorted.filter(function (t) { return t.type === 'income'; }).reduce(function (s, t) { return s + t.amount; }, 0);
       const totalEx = sorted.filter(function (t) { return t.type === 'expense'; }).reduce(function (s, t) { return s + t.amount; }, 0);
       totalInEl.textContent = formatRp(totalIn);
       totalExEl.textContent = formatRp(totalEx);
+      const balEl = document.getElementById('finTotalBalance');
+      if (balEl) balEl.textContent = formatRp(totalIn - totalEx);
+
+      // Apply search + category filter
+      const filtered = sorted.filter(function (t) {
+        if (filterType !== 'all' && t.type !== filterType) return false;
+        if (searchQuery && t.note.toLowerCase().indexOf(searchQuery) === -1) return false;
+        return true;
+      });
 
       if (!sorted.length) {
-        listEl.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada transaksi</p></div>';
+        listEl.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>Belum ada transaksi. Catat transaksi pertama Anda di atas.</p></div>';
+        renderChart();
         return;
       }
 
-      listEl.innerHTML = sorted.map(function (t) {
+      if (!filtered.length) {
+        listEl.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>Tidak ada transaksi yang cocok</p>' +
+          '<button class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="document.getElementById(\'finSearch\').value=\'\';document.getElementById(\'finSearch\').dispatchEvent(new Event(\'input\'));"><i class="fas fa-times"></i> Reset Pencarian</button></div>';
+        renderChart();
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(function (t) {
         var isIncome = t.type === 'income';
         var photoHTML = t.photo ? '<div style="margin-top:8px;"><img src="' + t.photo + '" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid var(--border-color);cursor:pointer;" onclick="window.open(this.src)" title="Klik untuk perbesar"></div>' : '';
         return '<div class="history-item">' +
@@ -555,6 +691,10 @@
               '<span class="date">' + t.date + '</span>' +
               '<span class="note">' + escapeHtml(t.note) + (t.photo ? ' <i class="fas fa-camera" style="color:var(--color-accent-1);"></i>' : '') + '</span>' +
               photoHTML +
+              '<div class="history-item-actions">' +
+                '<button class="btn btn-secondary btn-xs" onclick="window.__finEdit(' + t.id + ')" title="Edit"><i class="fas fa-pen"></i></button>' +
+                '<button class="btn btn-danger btn-xs" onclick="window.__finDelete(' + t.id + ')" title="Hapus"><i class="fas fa-trash"></i></button>' +
+              '</div>' +
             '</div>' +
           '</div>' +
           '<div class="history-item-amount" style="color:' + (isIncome ? 'var(--accent-success)' : 'var(--accent-danger)') + '">' + (isIncome ? '+' : '-') + formatRp(t.amount) + '</div>' +
@@ -562,6 +702,10 @@
       }).join('');
       renderChart();
     }
+
+    // Expose delete/edit globally (inline onclick)
+    window.__finDelete = deleteTransaction;
+    window.__finEdit = editTransaction;
 
     if (form) {
       form.addEventListener('submit', function (e) {

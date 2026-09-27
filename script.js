@@ -508,7 +508,43 @@
 
     const searchInput = document.getElementById('finSearch');
     const filterSelect = document.getElementById('finFilterType');
-    const analyticsRange = document.getElementById('finAnalyticsRange');
+    const monthInput = document.getElementById('finMonth');
+    const monthPrevBtn = document.getElementById('finMonthPrev');
+    const monthNextBtn = document.getElementById('finMonthNext');
+    const monthTodayBtn = document.getElementById('finMonthToday');
+
+    // Month state (YYYY-MM), default = current month
+    let analyticsMonth = (function () {
+      var n = new Date();
+      return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+    })();
+    if (monthInput) monthInput.value = analyticsMonth;
+
+    function getMonthTransactions() {
+      return data.transactions.filter(function (t) {
+        if (!t.date) return false;
+        return t.date.slice(0, 7) === analyticsMonth;
+      });
+    }
+
+    function shiftMonth(delta) {
+      var parts = analyticsMonth.split('-');
+      var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1 + delta;
+      var d = new Date(y, m, 1);
+      analyticsMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if (monthInput) monthInput.value = analyticsMonth;
+      renderChart();
+    }
+
+    if (monthInput) monthInput.addEventListener('change', function () { analyticsMonth = this.value; renderChart(); });
+    if (monthPrevBtn) monthPrevBtn.addEventListener('click', function () { shiftMonth(-1); });
+    if (monthNextBtn) monthNextBtn.addEventListener('click', function () { shiftMonth(1); });
+    if (monthTodayBtn) monthTodayBtn.addEventListener('click', function () {
+      var n = new Date();
+      analyticsMonth = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
+      if (monthInput) monthInput.value = analyticsMonth;
+      renderChart();
+    });
 
     if (searchInput) {
       searchInput.addEventListener('input', function () {
@@ -553,12 +589,42 @@
     function renderChart() {
       var chartEl = document.getElementById('finChart');
       if (!chartEl) return;
-      var range = analyticsRange ? parseInt(analyticsRange.value) : 30;
-      var grouped = groupByDate();
-      if (range > 0) grouped = grouped.slice(-range);
-      if (!grouped.length) {
-        chartEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Belum cukup data untuk analitik</p></div>';
+      var monthTx = getMonthTransactions();
+      var rangeInfo = document.getElementById('finRangeInfo');
+
+      // Build day buckets for the selected month (1st → last day)
+      var parts = analyticsMonth.split('-');
+      var y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
+      var daysInMonth = new Date(y, m + 1, 0).getDate();
+      var buckets = {};
+      for (var d = 1; d <= daysInMonth; d++) {
+        var key = analyticsMonth + '-' + String(d).padStart(2, '0');
+        buckets[key] = { income: 0, expense: 0 };
+      }
+      monthTx.forEach(function (t) {
+        if (!buckets[t.date]) return;
+        if (t.type === 'income') buckets[t.date].income += t.amount;
+        else buckets[t.date].expense += t.amount;
+      });
+      var grouped = Object.keys(buckets).sort().map(function (k) {
+        return { date: k, income: buckets[k].income, expense: buckets[k].expense };
+      });
+
+      var monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      var label = monthNames[m] + ' ' + y;
+      var nowDate = new Date();
+      var isCurrentMonth = (nowDate.getFullYear() === y && nowDate.getMonth() === m);
+      var lastDay = isCurrentMonth ? nowDate.getDate() : daysInMonth;
+      var rangeEnd = analyticsMonth + '-' + String(lastDay).padStart(2, '0');
+      if (rangeInfo) {
+        rangeInfo.innerHTML = '<i class="fas fa-calendar-alt"></i> 1 ' + monthNames[m] + ' – ' + lastDay + ' ' + monthNames[m] + ' ' + y +
+          ' · <strong>' + monthTx.length + '</strong> transaksi';
+      }
+
+      if (!monthTx.length) {
+        chartEl.innerHTML = '<div class="empty-state"><i class="fas fa-chart-bar"></i><p>Belum ada transaksi di ' + label + '</p></div>';
         renderCategoryBreakdown();
+        renderDailyStats();
         return;
       }
       var maxVal = 0;
@@ -590,8 +656,9 @@
     function renderCategoryBreakdown() {
       var el = document.getElementById('finCategoryBreakdown');
       if (!el) return;
+      var monthTx = getMonthTransactions();
       var incomeTotal = 0, expenseTotal = 0;
-      data.transactions.forEach(function (t) {
+      monthTx.forEach(function (t) {
         if (t.type === 'income') incomeTotal += t.amount;
         else expenseTotal += t.amount;
       });
@@ -623,8 +690,18 @@
     function renderDailyStats() {
       var el = document.getElementById('finDailyStats');
       if (!el) return;
-      var grouped = groupByDate();
-      if (!grouped.length) { el.innerHTML = ''; return; }
+      var monthTx = getMonthTransactions();
+      if (!monthTx.length) { el.innerHTML = ''; return; }
+
+      var groups = {};
+      monthTx.forEach(function (t) {
+        if (!groups[t.date]) groups[t.date] = { income: 0, expense: 0 };
+        if (t.type === 'income') groups[t.date].income += t.amount;
+        else groups[t.date].expense += t.amount;
+      });
+      var grouped = Object.keys(groups).sort().map(function (k) {
+        return { date: k, income: groups[k].income, expense: groups[k].expense };
+      });
 
       var incomeDays = grouped.filter(function (g) { return g.income > 0; });
       var expenseDays = grouped.filter(function (g) { return g.expense > 0; });
@@ -641,10 +718,6 @@
       html += '<div class="goal-stat"><span class="goal-stat-label">Hari Boros</span><strong class="goal-stat-value" style="color:var(--accent-danger);font-size:1rem;">' + worstDay.date.slice(5) + ' · ' + formatRp(worstDay.expense) + '</strong></div>';
       html += '</div>';
       el.innerHTML = html;
-    }
-
-    if (analyticsRange) {
-      analyticsRange.addEventListener('change', function () { renderChart(); });
     }
 
     function render() {

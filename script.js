@@ -618,27 +618,47 @@
       grouped.forEach(function (g) { maxVal = Math.max(maxVal, g.income, g.expense); });
       if (maxVal === 0) maxVal = 1;
 
-      var html = '<div class="chart-wrapper" style="display:flex;align-items:flex-end;gap:8px;height:180px;padding:10px 0;border-bottom:2px solid var(--border-color);margin-bottom:8px;">';
+      // Zoom state: px width per day-group (kept on instance)
+      if (typeof renderChart._zoom === 'undefined') renderChart._zoom = 44;
+      var dayW = renderChart._zoom;
+
+      var html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
+        '<div style="display:flex;gap:16px;font-size:0.8rem;">' +
+          '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-success);border-radius:3px;display:inline-block;"></span> Pemasukan</span>' +
+          '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-danger);border-radius:3px;display:inline-block;"></span> Pengeluaran</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:4px;align-items:center;">' +
+          '<button class="btn btn-secondary btn-sm" onclick="window.__finZoom(-1)" title="Zoom out"><i class="fas fa-minus"></i></button>' +
+          '<span style="font-size:0.75rem;color:var(--text-muted);min-width:52px;text-align:center;">' + dayW + 'px</span>' +
+          '<button class="btn btn-secondary btn-sm" onclick="window.__finZoom(1)" title="Zoom in"><i class="fas fa-plus"></i></button>' +
+        '</div>' +
+      '</div>';
+      html += '<div style="overflow-x:auto;overflow-y:hidden;border:1px solid var(--border-color);border-radius:var(--radius-md);padding:10px;background:var(--bg-tertiary);">';
+      html += '<div style="display:flex;align-items:flex-end;gap:6px;height:180px;padding:6px 4px 0;border-bottom:2px solid var(--border-color);width:' + (grouped.length * dayW) + 'px;min-width:100%;">';
       grouped.forEach(function (g) {
         var inH = (g.income / maxVal * 100) || 0;
         var exH = (g.expense / maxVal * 100) || 0;
-        html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
-          '<div style="display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;height:150px;">' +
-            '<div style="width:14px;background:var(--accent-success);border-radius:4px 4px 0 0;height:' + inH + '%;transition:height 0.5s ease;" title="Masuk: ' + formatRp(g.income) + '"></div>' +
-            '<div style="width:14px;background:var(--accent-danger);border-radius:4px 4px 0 0;height:' + exH + '%;transition:height 0.5s ease;" title="Keluar: ' + formatRp(g.expense) + '"></div>' +
+        html += '<div style="flex:0 0 ' + dayW + 'px;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+          '<div style="display:flex;align-items:flex-end;gap:2px;justify-content:center;height:150px;width:100%;">' +
+            '<div style="flex:1;max-width:16px;background:var(--accent-success);border-radius:4px 4px 0 0;height:' + inH + '%;min-height:' + (inH > 0 ? '3px' : '0') + ';transition:height 0.4s ease;" title="' + g.date + ' Masuk: ' + formatRp(g.income) + '"></div>' +
+            '<div style="flex:1;max-width:16px;background:var(--accent-danger);border-radius:4px 4px 0 0;height:' + exH + '%;min-height:' + (exH > 0 ? '3px' : '0') + ';transition:height 0.4s ease;" title="' + g.date + ' Keluar: ' + formatRp(g.expense) + '"></div>' +
           '</div>' +
-          '<span style="font-size:0.7rem;color:var(--text-muted);white-space:nowrap;">' + g.date.slice(5) + '</span>' +
+          '<span style="font-size:0.65rem;color:var(--text-muted);white-space:nowrap;">' + g.date.slice(8) + '</span>' +
         '</div>';
       });
-      html += '</div>';
-      html += '<div style="display:flex;gap:16px;justify-content:center;font-size:0.8rem;">' +
-        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-success);border-radius:3px;display:inline-block;"></span> Pemasukan</span>' +
-        '<span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--accent-danger);border-radius:3px;display:inline-block;"></span> Pengeluaran</span>' +
-      '</div>';
+      html += '</div></div>';
       chartEl.innerHTML = html;
       renderCategoryBreakdown();
       renderDailyStats();
     }
+
+    window.__finZoom = function (dir) {
+      var cur = renderChart._zoom || 44;
+      var next = Math.min(140, Math.max(20, cur + dir * 12));
+      if (next === cur) return;
+      renderChart._zoom = next;
+      renderChart();
+    };
 
     function renderCategoryBreakdown() {
       var el = document.getElementById('finCategoryBreakdown');

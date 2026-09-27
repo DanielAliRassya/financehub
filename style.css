@@ -358,9 +358,9 @@ section.tool-section.active-view { padding-top: 140px; }
 .goal-header h3 i { color: var(--accent-warning); }
 
 .goal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-.goal-stat { background: var(--bg-tertiary); padding: 14px; border-radius: var(--radius-md); text-align: center; }
-.goal-stat-label { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-.goal-stat-value { display: block; font-size: 1.1rem; font-weight: 700; }
+.goal-stat { background: var(--bg-card); border: 1px solid var(--border-color); padding: 16px 14px; border-radius: var(--radius-md); text-align: center; }
+.goal-stat-label { display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.goal-stat-value { display: block; font-size: 1.25rem; font-weight: 700; }
 .text-success { color: var(--accent-success); }
 .text-accent { color: var(--accent-secondary); }
 
